@@ -381,9 +381,9 @@ RosEventQueue::RosEventQueue():decision_making::EventQueue(), do_not_publish_spi
 	std::string node_name = ros::this_node::getName();
 	std::string topic_name = "/decision_making/"+node_name+"/events";
 	publisher = ros::NodeHandle().advertise<std_msgs::String>(topic_name, 100);
-	{boost::this_thread::sleep(boost::posix_time::seconds(1.0));}
+	{boost::this_thread::sleep(boost::posix_time::seconds(int(1.0)));}
 	subscriber= ros::NodeHandle().subscribe<std_msgs::String>(topic_name, 100, &RosEventQueue::onNewEvent, this);
-	{boost::this_thread::sleep(boost::posix_time::seconds(1.0));}
+	{boost::this_thread::sleep(boost::posix_time::seconds(int(1.0)));}
 }
 RosEventQueue::RosEventQueue(EventQueue* parent):decision_making::EventQueue(parent), do_not_publish_spin(true){
 }
@@ -419,7 +419,7 @@ void ros_decision_making_init(int &argc, char **argv){
 	RosDiagnostic::get();
 	RosConstraints::getAdder();
 	RosConstraints::getRemover();
-	boost::this_thread::sleep(boost::posix_time::seconds(1.0));
+	boost::this_thread::sleep(boost::posix_time::seconds(int(1.0)));
 }
 
 

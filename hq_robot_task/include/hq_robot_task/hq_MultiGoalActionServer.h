@@ -435,7 +435,7 @@ namespace actionlib {
 							 (int)stopped_tasks, (int)started_tasks, (int)active_goals.size());
 				}
 				
-				execute_condition_.timed_wait(lock, boost::posix_time::milliseconds(loop_duration.toSec() * 1000.0f));
+				execute_condition_.timed_wait(lock, boost::posix_time::milliseconds(int(loop_duration.toSec() * 1000.0f)));
 		}
     
 		while(new_goals.size()>0) new_goals.remove(new_goals.begin());

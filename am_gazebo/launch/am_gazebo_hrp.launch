@@ -33,7 +33,7 @@
 	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
 
 	<!-- publish all the frames to TF -->
-	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
 		<param name="publish_frequency" value="50"/>
 	</node>
  
