@@ -1,0 +1,33 @@
+<launch>
+
+  <node name="trace_pub"
+        pkg="am_sensors"
+        type="tracking_marker_pub"
+        output="screen">
+    <param name="trace_amount"  value="4" />
+    <param name="frequency"     value="25" />
+
+    <param name="pose_topic1"   value="/odom"/>
+    <param name="data_type1"    value="nav_msgs/Odometry"/> 
+    <param name="color1"        value="red"/>
+
+    <param name="pose_topic2"   value="/odometry/filtered" />
+    <param name="data_type2"    value="nav_msgs/Odometry"/> 
+    <param name="color2"        value="green"/>
+
+    <param name="pose_topic3"   value="/gnss_left/pose" />
+    <param name="data_type3"    value="geometry_msgs/PoseWithCovarianceStamped"/> 
+    <param name="color3"        value="yellow"/>
+
+    <param name="pose_topic4"   value="/gnss_right/pose" />
+    <param name="data_type4"    value="geometry_msgs/PoseWithCovarianceStamped"/> 
+    <param name="color4"        value="orange"/>
+
+    <!-- <param name="pose_topic5"   value="/rtabmap/odom"/> -->
+    <!-- <param name="data_type5"    value="nav_msgs/Odometry"/>  -->
+    <!-- <param name="color5"        value="cyan"/> -->
+
+
+  </node>
+
+</launch>

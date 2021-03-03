@@ -1,0 +1,106 @@
+<launch>
+
+  <!-- Select which sensors are to be used -->
+  <arg name="useCustomOdom" default="False"  />
+  <arg name="useLeftGNSS"   default="False" />
+  <arg name="useRightGNSS"  default="False" />
+  <arg name="useLeftIMU"    default="True" />
+  <arg name="useRightIMU"   default="True" />
+
+  <!-- Only indicating if using cpt filter or magdwick. -->
+  <arg name="useCptFilter"  default="True"/>
+
+  <group if="$(arg useCustomOdom)" >
+    <node name="encoder_odo_pub"
+          pkg="am_sensors"
+          type="encoder_odo">
+      <!-- <param name="" value="" /> -->
+    </node>
+  </group>
+
+  <!-- convert the original gnss measurement -->
+  <group if="$(arg useLeftGNSS)" 
+    ns="gnss_left">
+    <node name="gnss_left_pub"
+          pkg="am_sensors"
+          type="gnss_pub.py">
+      <param name="device_serial_number"  value="285614" />
+      <!-- Unit: in second or meter -->
+      <param name="warming_time"   value="50"/> 
+      <param name="pub_frequency"  value="10"/>
+      <param name="control_stdev"  value="10" />      
+
+    </node>
+  </group>
+
+  <group if="$(arg useRightGNSS)" 
+    ns="gnss_right">
+    <node name="gnss_right_pub"
+          pkg="am_sensors"
+          type="gnss_pub.py">
+    <param name="device_serial_number" value="285332" />
+    <!-- Unit: in second or meter -->
+    <param name="warming_time"   value="50"/> 
+    <param name="pub_frequency"  value="10"/>
+    <param name="control_stdev"  value="10" /> 
+
+    </node>
+  </group>
+
+
+  <!-- launch the IMUs -->
+  <group if="$(arg useLeftIMU)"
+    ns="imu_left">
+
+    <include file="$(find am_sensors)/launch/imu_left_cpt.launch" />
+
+    <node name="imu_process"
+          pkg="am_sensors"
+          type="imu_process">
+      <param name="topic_name" value="imu/data"/>
+      <param name="frame_name" value="imu01_link"/>
+      <param name="pub_test_tf" value="false"/>
+      <param name="xyz" value="0.0 0.16 0.37"/>
+      <param name="rpy" value="3.142 0.0 1.571"/>
+      <param name="publish_rpy" value="false"/>
+
+      <!-- On operation walkaround: to omit orientation ouput during drastic turn -->
+      <param name="do_pub_control" value="true"/>
+      <param name="trans_velocity_threshod" value="1.0"/>
+      <param name="angular_velocity_threshod" value="1.5"/>
+      <param name="do_covariance_adaption" value="true"/>
+      <param name="orientation_stddev_r" value="0.005"/>
+      <param name="orientation_stddev_p" value="0.005"/>
+      <param name="orientation_stddev_y" value="0.010"/>
+
+    </node>
+  </group>
+
+  <group if="$(arg useRightIMU)"
+    ns="imu_right">
+
+    <include file="$(find am_sensors)/launch/imu_right_cpt.launch" />
+
+    <node name="imu_process"
+          pkg="am_sensors"
+          type="imu_process">
+      <param name="topic_name" value="imu/data"/>
+      <param name="frame_name" value="imu02_link"/>
+      <param name="pub_test_tf" value="false"/>
+      <param name="xyz" value="0.0 -0.16 0.37"/>
+      <param name="rpy" value="3.142 0.0 1.571"/>
+      <param name="publish_rpy" value="false"/>
+
+      <param name="do_pub_control" value="true"/>
+      <param name="trans_velocity_threshod" value="1.0"/>
+      <param name="angular_velocity_threshod" value="1.5"/>
+      <param name="do_covariance_adaption" value="true"/>
+      <param name="orientation_stddev_r" value="0.005"/>
+      <param name="orientation_stddev_p" value="0.005"/>
+      <param name="orientation_stddev_y" value="0.010"/>
+
+    </node>
+  </group>
+
+
+</launch>

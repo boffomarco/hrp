@@ -2732,6 +2732,10 @@ bool AutomowerSafe::update(ros::Duration dt)
         double vx = distance / dt.toSec();
         double vy = 0.0;
 
+        /************************************************************************************
+         * Odom position seems reliable, yet twist is very wrong. The issus might lies in dt?
+        *************************************************************************************/
+
         xpos = xpos + xdist;
         ypos = ypos + ydist;
 
@@ -2801,11 +2805,17 @@ bool AutomowerSafe::update(ros::Duration dt)
         odom.pose.pose.position.y = robot_pose.pose.position.y;
         odom.pose.pose.position.z = robot_pose.pose.position.z;
         odom.pose.pose.orientation = robot_pose.pose.orientation;
+        odom.pose.covariance[0] = 0.00002;
+        odom.pose.covariance[7] = 0.00002;
+        odom.pose.covariance[35] = 0.0015;
 
         // Set the velocity
         odom.twist.twist.linear.x = vx;
         odom.twist.twist.linear.y = vy;
         odom.twist.twist.angular.z = vYaw;
+        odom.twist.covariance[0] = 0.000002;
+        odom.twist.covariance[7] = 0.0000000001;
+        odom.twist.covariance[35] = 0.000005;
 
         // Publish the message
         odom_pub.publish(odom);

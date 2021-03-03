@@ -1,23 +1,58 @@
-# Husqvarna Research Platform
+# Sensor fusion of heterogeneous devices for precise outdoor localisation of a mobile robot 
+## Implementation and analysis of techniques to localise precisely an automower in an outdoor lawn
+======
+![](doc/media/projectTheme2.png)
 
-2017 (C) Husqvarna Group
+## Contents
 
-The main repository for Husqvarna Research Platform. This repo contains the basic software and models for you to bring up and run the HRP-enabled mower.
-The repository will work with ros (see ros.org) kinetic and indigo releases. Please check documentation for detailed information.
+- [Overview](#Overview)
+- [Launch](#Launch)
+- [Documentation](#Documentation)
+- [License](#License)
+<!-- - [API documentation](#API-documentation) -->
+<!-- - [Read more](##Read-more) -->
 
-## Usage
-In order to use this, you need to have access to an Automower (with HRP-enabled firmware). If you have a nice research project please do not hesitate to contact us to see if you can 
-get one as well...we are always interested in nice new research!
 
-NOTE! This is not a GENERAL OFFER and it is not a product you can buy! 
-It is not possible to run HRP on commercial available mowers. To get this to work you need to get the mowers from us (loaded with a 
-special firmware not publically available). In order to get a mower, please apply to us with the research idea you have (like a one-pager) 
-and we will evaluate this against all other applicants. Also note that this offer is directed at research institutes and/or univerisities 
-conducting robotics research. For companies, you are free (and most welcome!) to contact us with ideas for possible co-operation 
-where this can be utilized as a part of that co-operation, but the mowers are not generally available to companies.
+## Overview
+<a name="Overview"></a>
 
-## Cloning
-Note that this repo contains "large files" and hence you need to have "git-lfs" installed. Please follow the instructions (for example here: https://git-lfs.github.com/) to install!
+This project is designed for Huqvarna automower 450x as a trial to replace the underlaid wire boundary. The repository is based on ![Husqvarna Research Platform](https://github.com/HusqvarnaResearch/hrp).
+It has been added a localization module with additional two IMU, two GNSS, and one Intel Realsense D435 depth camera. 
 
-## Partners
-If you are a HRP partner and want to contribute, please let us know and we will add you to the organization.
+The localization function is considered an active approach that applies Kalman filters to fuse the sensors' outputs and can integrate with the estimated pose from the visual odometry node. 
+
+The software is designed under Ubuntu 20.04 and ROS Noetic. 
+
+
+## Launch
+<a name="Launch"></a>
+
+In order to test, we seperate the functions into different launch files, which can be combined in one overall launch if desired.
+
+### On physical hardware
+
+Launch files   | Functions
+-------------- | -------
+`roslaunch am_driver_safe automower_hrp.launch`	| Launch the robot
+`roslaunch am_sensors sensors.launch`          	| Launch the added sensors
+`rosrun am_driver hrp_teleop.py`            	| Control via keyboard
+`roslaunch am_driver_safe ekf_template.launch`  | Launch localization
+`./am_vision/scripts/boundary_detect.py`        | Run the boundary detect node (may link to ROS later)
+`roslaunch am_sensors rtabmap.launch`           | Launch visual-SLAM
+`roslaunch am_driver path_follow`				| Run the path follower
+
+Examplary results (you should take it with a pinch of salt):
+![](doc/media/boundary_detect.png)
+
+### In simulation
+Althought not heavily used in this projected, the simulation in Gazebo provides models of the robot and sensors. Two lawn settings are also available in `simulation/am_gazebo/worlds`. In order to launch: 
+```
+roslaunch am_gazebo am_gazebo_hrp.launch gui:=true
+```
+The robot in simulation also receives control input via the topic `/cmd/vel`, so `hrp_teleop.py` can be useful here.
+
+
+## License
+<a name="License"></a>
+
+This repository is under the open source MIT License. 
