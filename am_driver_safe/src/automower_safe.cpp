@@ -219,9 +219,9 @@ AutomowerSafe::AutomowerSafe(const ros::NodeHandle& nodeh, decision_making::RosE
 
     loop_pub = nh.advertise<am_driver::Loop>("loop", 5);
     sensorStatus_pub = nh.advertise<am_driver::SensorStatus>("sensor_status", 5);
-     
+
     batStatus_pub  = nh.advertise<am_driver::BatteryStatus>("battery_status", 5, true);
-    
+
     navSatFix_pub = nh.advertise<sensor_msgs::NavSatFix>("GPSfix", 5);
 
     currentStatus_pub = nh.advertise<am_driver::CurrentStatus>("current_status", 5);
@@ -292,7 +292,7 @@ AutomowerSafe::AutomowerSafe(const ros::NodeHandle& nodeh, decision_making::RosE
     timeSincePitchRoll = ros::Duration(0.035);
     timeSincebattery = ros::Duration(0.045);
     timeSinceGPS = ros::Duration(0.055);
-    timeSinceStatus = ros::Duration(1.065);  // Make sure we read this from the beginning by setting 
+    timeSinceStatus = ros::Duration(1.065);  // Make sure we read this from the beginning by setting
     timeSinceCollision = ros::Duration(0.0);
 
 
@@ -389,7 +389,7 @@ bool AutomowerSafe::turnOffLoop(am_driver_safe::turnOfLoopCmd::Request& req,
 
 ssize_t AutomowerSafe::sendMessage(unsigned char *msg, size_t len, unsigned char *ansmsg, size_t maxAnsLength, bool retry)
 {
-	
+
 /*
  	std::cout << "SEND: " << std::hex;
 	for (int i=0; i<len; i++)
@@ -397,12 +397,12 @@ ssize_t AutomowerSafe::sendMessage(unsigned char *msg, size_t len, unsigned char
 		std::cout << "0x" << (int)msg[i] << " ";
 	}
 	std::cout << std::dec << std::endl;
-*/	
-	
+*/
+
 	// Sending
   ssize_t cnt=0;
 	cnt = write(serialFd, msg, len);
-	
+
 	if(cnt != len)
 	{
 		ROS_ERROR("AutomowerHIL::Could not send on serial port!");
@@ -412,12 +412,12 @@ ssize_t AutomowerSafe::sendMessage(unsigned char *msg, size_t len, unsigned char
 	cnt = 0;
   ssize_t res;
   size_t payloadLength = 0;
-	
+
 	// Clear answer buffer
 	memset(ansmsg, 0, maxAnsLength);
-	
+
 	// Keep reading until we find an STX
-	
+
 	// receive STX
 	while (ansmsg[cnt] != 0x02)
 	{
@@ -429,13 +429,13 @@ ssize_t AutomowerSafe::sendMessage(unsigned char *msg, size_t len, unsigned char
 	res = read(serialFd, &ansmsg[cnt], 1);
 	//std::cout << "MESSAGE TYPE: " << (int)ansmsg[cnt] << std::endl;
 	cnt++;
-	
+
 	// Read LENGTH
 	res = read(serialFd, &ansmsg[cnt], 1);
 	payloadLength = ansmsg[cnt];
 	//std::cout << "PAYLOAD LENGTH: " << (int)payloadLength << std::endl;
 	cnt++;
-	
+
 	// Read PAYLOAD
 	unsigned char readBytes = 0;
 	unsigned max_retries = 100;
@@ -449,7 +449,7 @@ ssize_t AutomowerSafe::sendMessage(unsigned char *msg, size_t len, unsigned char
 		}
 		max_retries--;
 	}
-	
+
 	// Read CRC
 	// TODO: Use it!
 	res = read(serialFd, &ansmsg[cnt], 1);
@@ -814,8 +814,8 @@ void AutomowerSafe::velocityCallback(const geometry_msgs::Twist::ConstPtr& vel)
     wanted_lv = lin_vel - ang_vel * AUTMOWER_WHEEL_BASE_WIDTH / 2;
     wanted_rv = lin_vel + ang_vel * AUTMOWER_WHEEL_BASE_WIDTH / 2;
 
-    // ROS_INFO("Automower::cmd_vel: %f m/s  %f rad/s => wanted_lv=%f, wanted_rv=%f", (float)lin_vel, (float)ang_vel,
-    // (float)wanted_lv, (float)wanted_rv);
+    // Debug control
+    ROS_INFO("Automower::cmd_vel: %f m/s  %f rad/s => wanted_lv=%f, wanted_rv=%f", (float)lin_vel, (float)ang_vel, (float)wanted_lv, (float)wanted_rv);
 }
 
 void AutomowerSafe::powerCallback(const am_driver::WheelPower::ConstPtr& power)
@@ -1278,7 +1278,7 @@ bool AutomowerSafe::initAutomowerBoard()
         //Best guesses... todo check really
         AUTMOWER_WHEEL_BASE_WIDTH = 0.370; // Jonathan Björn
         WHEEL_DIAMETER = 0.210;
-        WHEEL_PULSES_PER_TURN = 1192; 
+        WHEEL_PULSES_PER_TURN = 1192;
         WHEEL_METER_PER_TICK = (2.0 * M_PI * WHEEL_DIAMETER / 2.0) / (double)WHEEL_PULSES_PER_TURN;
     }
 
@@ -1363,7 +1363,7 @@ bool AutomowerSafe::getEncoderData()
 }
 
 bool AutomowerSafe::getWheelData()
-{ 
+{
     ros::Time current_time = ros::Time::now();
     hcp_tResult result;
 
@@ -1378,12 +1378,12 @@ bool AutomowerSafe::getWheelData()
     int16_t tmpValue;
     tmpValue = result.parameters[1].value.i16;
     current_lv = ((double)tmpValue) / 1000.0;
-    wheelPower.left = std::copysign(result.parameters[0].value.i16, power_l); // Not entierly correct. Uses the sign of the sent power. But may not be the same as the ongoing.
+    wheelPower.left = std::copysign(result.parameters[0].value.i16, power_l); // Not entirely correct. Uses the sign of the sent power. But may not be the same as the ongoing.
     wheelCurrent.left = result.parameters[2].value.i16;
 
     tmpValue = result.parameters[4].value.i16;
     current_rv = ((double)tmpValue) / 1000.0;
-    wheelPower.right = std::copysign(result.parameters[3].value.i16, power_r); // Not entierly correct. Uses the sign of the sent power. But may not be the same as the ongoing.
+    wheelPower.right = std::copysign(result.parameters[3].value.i16, power_r); // Not entirely correct. Uses the sign of the sent power. But may not be the same as the ongoing.
     wheelCurrent.right = result.parameters[5].value.i16;
 
     wheelCurrent.header.stamp = current_time;
@@ -1395,14 +1395,14 @@ bool AutomowerSafe::getWheelData()
 
     motorFeedbackDiffDrive.left.omega = current_lv / (0.5 * WHEEL_DIAMETER);
     motorFeedbackDiffDrive.left.current = ((double)result.parameters[2].value.i16 / 1000);
-    // Not entierly correct. Uses the sign of the sent power. But may not be the same as the ongoing.
+    // Not entirely correct. Uses the sign of the sent power. But may not be the same as the ongoing.
     motorFeedbackDiffDrive.left.controlPower = std::copysign(result.parameters[0].value.i16, power_l);
     motorFeedbackDiffDrive.left.controlOmega = wanted_lv / (0.5 * WHEEL_DIAMETER);
 
 
     motorFeedbackDiffDrive.right.omega = current_rv / (0.5 * WHEEL_DIAMETER);
     motorFeedbackDiffDrive.right.current = ((double)result.parameters[5].value.i16 / 1000);
-    // Not entierly correct. Uses the sign of the sent power. But may not be the same as the ongoing.
+    // Not entirely correct. Uses the sign of the sent power. But may not be the same as the ongoing.
     motorFeedbackDiffDrive.right.controlPower = std::copysign(result.parameters[3].value.i16, power_r);
     motorFeedbackDiffDrive.right.controlOmega = wanted_rv / (0.5 * WHEEL_DIAMETER);
 
@@ -1621,7 +1621,8 @@ bool AutomowerSafe::getGPSData()
 
         navSatFix_pub.publish(m_navSatFix_msg);
 
-        //std:: cout << "nSat : " << int(nbrSatellites) << "  lat: " << latitude << "  long: "  << longitude << " status: " << int(GPS_status) << " " << latitudeDegMinutes  << " " << latitudeDecimalMinute << std::endl;
+        // Print debug information
+        std:: cout << "nSat : " << int(nbrSatellites) << "  lat: " << latitude << "  long: "  << longitude << " status: " << int(GPS_status) << " " << latitudeDegMinutes  << " " << latitudeDecimalMinute << std::endl;
     }
     return true;
 }
@@ -2224,7 +2225,7 @@ void AutomowerSafe::sendGuideCommand(std::string cmd, double delaySec, ros::Dura
             ROS_WARN("sendGuideCommand failed!");
             followGuideState = 0;
         }
-        
+
         ROS_INFO("%d: Sending: %s",followGuideState, msg);
         std::string strRes;
         strRes = resultToString(result);
@@ -2240,14 +2241,14 @@ void AutomowerSafe::handleFollowGuide(ros::Duration dt)
     std::stringstream message;
     char buf[200];
     switch (followGuideState)
-    {   
+    {
         //Dont do anything until triggered
         case 0:
             break;
 
 
         case 1: //Simulate Stop Button
-        { 
+        {
             sendGuideCommand("StopButton.SetSimulation(simOnOff:1)", 0.1, dt);
             break;
         }
@@ -2273,8 +2274,8 @@ void AutomowerSafe::handleFollowGuide(ros::Duration dt)
 
         case 5: //Configure width (driving over guide for best accuracy (?))
         {
-            
-            sprintf(buf,    "DrivingSettings.SetCorridor(loopWire:%d, minDistToWire:%d,     maxDistToWire:%d,   wireInGuideCorridor:%d, autoDistanceEnable:%d)", 
+
+            sprintf(buf,    "DrivingSettings.SetCorridor(loopWire:%d, minDistToWire:%d,     maxDistToWire:%d,   wireInGuideCorridor:%d, autoDistanceEnable:%d)",
                                                         wireToFollow, inCorridorMinWidth,   inCorridorMaxWidth, wireInGuideCorridor,    autoDistanceEnabled );
             sendGuideCommand(std::string(buf), 0.1, dt);
             break;
@@ -2291,7 +2292,7 @@ void AutomowerSafe::handleFollowGuide(ros::Duration dt)
             sprintf(buf, "DrivingSettings.SetTestFollowWireIn(loopWire:%d)", wireToFollow);
             sendGuideCommand(std::string(buf), 0.3, dt);
             break;
-        }        
+        }
         case 8: //Set F-field as week as possible
         {
             sprintf(buf,"DrivingSettings.SetCSRange(range:%d)", CS_Range_min);
@@ -2328,7 +2329,7 @@ void AutomowerSafe::handleFollowGuide(ros::Duration dt)
         }
 
         //Abort the following, and enter manual mode------------
-        
+
         case 255: //Start simulating the hatch
         {
             sendGuideCommand("StopButton.SetSimulation(simOnOff:1)", 0.3, dt);
@@ -2400,7 +2401,7 @@ void AutomowerSafe::handleCollisionInjections(ros::Duration dt)
         case 1:
         {
             ROS_INFO("Collision.SetSimulation(onOff:1)");
-            hcp_tResult result; 
+            hcp_tResult result;
             const char* msg = "Collision.SetSimulation(onOff:1)";
             if (!sendMessage(msg, sizeof(msg), result))
             {
@@ -2412,7 +2413,7 @@ void AutomowerSafe::handleCollisionInjections(ros::Duration dt)
         case 2:
         {
             ROS_INFO("Collision.SetSimulatedStatus(status:1)");
-            hcp_tResult result; 
+            hcp_tResult result;
             const char* msg =  "Collision.SetSimulatedStatus(status:1)";
             if (!sendMessage(msg, sizeof(msg), result))
             {
@@ -2423,14 +2424,14 @@ void AutomowerSafe::handleCollisionInjections(ros::Duration dt)
             break;
         }
         case 3:
-        {   
-            
+        {
+
             timeSinceCollision += dt;
             // x ms before deactivating the collision signal
             if (isTimeOut(timeSinceCollision, 1))
             {
                 ROS_INFO( "Collision.SetSimulatedStatus(status:0)");
-                hcp_tResult result; 
+                hcp_tResult result;
                 const char* msg =  "Collision.SetSimulatedStatus(status:0)";
                 if (!sendMessage(msg, sizeof(msg), result))
                 {
@@ -2439,11 +2440,11 @@ void AutomowerSafe::handleCollisionInjections(ros::Duration dt)
                 collisionState = 4;
             }
             break;
-            
+
         }
         case 4:
         {
-            hcp_tResult result; 
+            hcp_tResult result;
             ROS_INFO("Collision.SetSimulation(onOff:0)");
             const char* msg = "Collision.SetSimulation(onOff:0)";
             if (!sendMessage(msg, sizeof(msg), result))
@@ -2459,7 +2460,7 @@ void AutomowerSafe::handleCollisionInjections(ros::Duration dt)
         case 5:
         {
             ROS_INFO("Collision.SetSimulation(onOff:1)");
-            hcp_tResult result; 
+            hcp_tResult result;
             const char* msg = "Collision.SetSimulation(onOff:1)";
             if (!sendMessage(msg, sizeof(msg), result))
             {
@@ -2471,7 +2472,7 @@ void AutomowerSafe::handleCollisionInjections(ros::Duration dt)
         case 6:
         {
             ROS_INFO("Collision.SetSimulatedStatus(status:0)");
-            hcp_tResult result; 
+            hcp_tResult result;
             const char* msg =  "Collision.SetSimulatedStatus(status:0)";
             if (!sendMessage(msg, sizeof(msg), result))
             {
@@ -2485,7 +2486,7 @@ void AutomowerSafe::handleCollisionInjections(ros::Duration dt)
         case 7:
         {
             ROS_INFO("Collision.SetSimulation(onOff:0)");
-            hcp_tResult result; 
+            hcp_tResult result;
             const char* msg = "Collision.SetSimulation(onOff:0)";
             if (!sendMessage(msg, sizeof(msg), result))
             {
@@ -2659,7 +2660,7 @@ bool AutomowerSafe::update(ros::Duration dt)
 
         if (newSound)
         {
-            hcp_tResult result; 
+            hcp_tResult result;
             const char* msg = soundCmd;
             if (!sendMessage(msg, sizeof(msg), result))
             {
@@ -2711,20 +2712,24 @@ bool AutomowerSafe::update(ros::Duration dt)
         if ((fabs(leftDist) > 1.0) || (fabs(rightDist) > 1.0))
         {
             DEBUG_LOG("Automower::Strange distance? - zeroint counters from mower");
-            // ROS_INFO("Automower::Strange distance? => ld = %f, rd = %f", leftDist, rightDist);
+            // Keep debug info
+            ROS_INFO("Automower::Strange distance? => ld = %f, rd = %f", leftDist, rightDist);
             leftDist = 0;
             rightDist = 0;
         }
 
-        // ROS_INFO("Automower::ld = %f, rd = %f", leftDist, rightDist);
+        // Keep debug info
+        ROS_INFO("Automower::ld = %f, rd = %f", leftDist, rightDist);
 
-        double distance = (rightDist + leftDist) / 2.0;
-        double delta_yaw = -(leftDist - rightDist) / AUTMOWER_WHEEL_BASE_WIDTH;
+        double distance = (rightDist + leftDist) / 2.0; // v*s
+        double delta_yaw = -(leftDist - rightDist) / AUTMOWER_WHEEL_BASE_WIDTH; // w*s
 
         yaw = yaw + delta_yaw;
 
         double vYaw = (yaw - last_yaw) / dt.toSec();
         last_yaw = yaw;
+
+        // TODO - Try to check with different differential integrations
 
         double xdist = distance * cos(yaw);
         double ydist = distance * sin(yaw);
@@ -2733,13 +2738,15 @@ bool AutomowerSafe::update(ros::Duration dt)
         double vy = 0.0;
 
         /************************************************************************************
-         * Odom position seems reliable, yet twist is very wrong. The issus might lies in dt?
+         * Odom position seems reliable, yet twist is very wrong. Might The issue lie in dt?
+         * Eventually improve its accuracy
         *************************************************************************************/
 
         xpos = xpos + xdist;
         ypos = ypos + ydist;
 
-        // ROS_INFO("Automower::pos: dt=%f xpos=%f, ypos=%f", (dt.toSec()), (float)xpos, (float)ypos);
+        // Keep debug info
+        ROS_INFO("Automower::pos: dt=%f xpos=%f, ypos=%f", (dt.toSec()), (float)xpos, (float)ypos);
 
         // Set position into the pose
         robot_pose.pose.position.x = xpos;
@@ -2751,7 +2758,7 @@ bool AutomowerSafe::update(ros::Duration dt)
 
         if (m_PitchAndRollFromAccelerometer)
         {
-            qyaw = tf::createQuaternionFromRPY(m_roll,m_pitch, yaw); 
+            qyaw = tf::createQuaternionFromRPY(m_roll,m_pitch, yaw);
         }
         else
         {
@@ -2775,8 +2782,10 @@ bool AutomowerSafe::update(ros::Duration dt)
         encoder.lticks = current_lv * 1000.0; //deltaLeftPulses;
         encoder.rticks = current_rv * 1000.0; //deltaRightPulses;
 
-        // std::cout << "LeftDist: " << leftDist << " RightDist: " << rightDist;
-        // std::cout << " LeftAccum: " << (int)leftPulses << " RightAccum: " << (int)rightPulses << std::endl;
+        // Keep debug info
+        std::cout << "LeftDist: " << leftDist << " RightDist: " << rightDist;
+        std::cout << " LeftAccum: " << (int)leftPulses << " RightAccum: " << (int)rightPulses << std::endl;
+
         encoder_pub.publish(encoder);
         current_pub.publish(wheelCurrent);
         wheelPower_pub.publish(wheelPower);
@@ -2999,9 +3008,5 @@ void AutomowerSafe::clearOverRide()
     }
 
 }
-	
-
-
-
 
 }

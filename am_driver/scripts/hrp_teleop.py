@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/python3
 import os
 import select
 import sys
@@ -170,7 +170,7 @@ class HRP_Teleop(object):
 
     rows, term_width = os.popen('stty size', 'r').read().split()
 
-    if term_width < self.last_terminalWidth:
+    if int(term_width) < int(self.last_terminalWidth):
     # Terminal shrink destroys status message, show usage again
       self.loginfo('\n\n\n\n\n\n\n\n\n\n\n')
       self.print_usage()

@@ -1,6 +1,6 @@
-/* 	
- * IMU original data processor 
- * to publish the IMU data in correct frame and with more accuarte covariance.s 
+/*
+ * IMU original data processor
+ * to publish the IMU data in correct frame and with more accurate covariances
  *
  */
 
@@ -26,6 +26,9 @@ IMUProcess::IMUProcess(
 	cmd_vel_sub_ = nh_.subscribe("/cmd_vel", 10, &IMUProcess::CmdVelCallback, this);
 	if(publish_rpy_)
 		imu_pub_rpy_ = nh_.advertise<geometry_msgs::Vector3>("rpy", 200);
+
+  	ROS_INFO("Finished initialization of IMUProcess!!");
+
 }
 
 IMUProcess::~IMUProcess()
@@ -34,7 +37,7 @@ IMUProcess::~IMUProcess()
 }
 
 void IMUProcess::initializeParams()
-{	
+{
 	std::string xyz;
     std::string rpy;
     std::stringstream ss_tmp;
@@ -95,7 +98,7 @@ void IMUProcess::initializeParams()
 }
 
 void IMUProcess::IMUCallback(const sensor_msgs::Imu &msg)
-{	
+{
 	sensor_msgs::Imu imu_tmp = msg;
 	tf2::Quaternion q_nwu, q_rot, q_enu;
 
@@ -124,8 +127,8 @@ void IMUProcess::IMUCallback(const sensor_msgs::Imu &msg)
 	quat_msg.z=0.707;
 	quat_msg.w=0.707;
 
-   	tf2::convert(quat_msg , q_rot); 
-	
+   	tf2::convert(quat_msg , q_rot);
+
 	q_enu = q_rot*q_nwu;  // Calculate the new orientation
 	q_enu.normalize();
 	// Stuff the new rotation back into the pose. This requires conversion into a msg type
@@ -160,15 +163,15 @@ void IMUProcess::CmdVelCallback(const geometry_msgs::Twist msg)
 	{
 		if (vt > trans_velocity_threshod_ || vr > angular_velocity_threshod_)
 			imu_shall_pub_ = false;
-		else 
+		else
 			imu_shall_pub_ = true;
 	}
-	else 
+	else
 			imu_shall_pub_ = true;
 
 	if (do_covariance_adaption_)
-	{	
-		// customized coeffecient, should be tuned. 
+	{
+		// customized coeffecient, should be tuned.
 		uncertainty_coef_r_ = 1.0 + 10*vr + 5*vt;
 		uncertainty_coef_p_ = 1.0 + 10*vr + 5*vt;
 		uncertainty_coef_y_ = 1.0 + 20*vr + 10*vt;
@@ -176,7 +179,8 @@ void IMUProcess::CmdVelCallback(const geometry_msgs::Twist msg)
 }
 
 void IMUProcess::pub_tf(double x, double y, double z, double r, double p, double yaw, const std::string frame_name)
-{	
+{
+  	ROS_INFO("pub_tf!!");
 	ros::Rate rate(10.0);
 
 	static tf::TransformBroadcaster br;
@@ -187,7 +191,7 @@ void IMUProcess::pub_tf(double x, double y, double z, double r, double p, double
 	transform.setRotation(q);
 
 	while (nh_.ok()){
-		br.sendTransform(tf::StampedTransform(transform.inverse(), 
+		br.sendTransform(tf::StampedTransform(transform.inverse(),
 		ros::Time::now(), frame_name, "map_test")); // first parent frame name, then child frame name
 		rate.sleep();
 	}
@@ -199,10 +203,12 @@ void IMUProcess::pub_tf(double x, double y, double z, double r, double p, double
 
 int main(int argc, char** argv)
 {
+  	ROS_INFO("Start IMUProcess!!");
 	ros::init(argc, argv, "IMUProcess");
 	ros::NodeHandle nh;
 	ros::NodeHandle nh_private("~");
 	am_sensors_imu::IMUProcess imu_instance(nh, nh_private);
+  	ROS_INFO("Run IMUProcess!!");
 	ros::spin();
 	return 0;
 }

@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 """
-	Get the latitude and longitude from the GNSS and publish: 
+	Get the latitude and longitude from the GNSS and publish:
 	1. latitude, longitude and altitude in sensor_msgs/NavSatFix
-	2. relative postion to the initial point in ENU 
+	2. relative postion to the initial point in ENU
 	   in geometry_msgs/PoseWithCovarianceStamped.
 
 """
@@ -11,16 +11,17 @@ import rospy
 import time
 import numpy as np
 from geometry_msgs.msg import PoseWithCovarianceStamped, Vector3
-from sensor_msgs.msg import NavSatFix 
+from sensor_msgs.msg import NavSatFix
 from Phidget22.PhidgetException import *
 from Phidget22.Phidget import *
 from Phidget22.Devices.GPS import *
 
+import pymap3d as pm
 
-# Define the initial position and standard variance of measurement of the GNSS  
+# Define the initial position and standard variance of measurement of the GNSS
 # Unit: meter
 DECI_DEGREE_TO_METER = 111320
-INITIAL_LATITUDE = 59.40455 
+INITIAL_LATITUDE = 59.40455
 INITIAL_LONGITUDE = 17.94965
 LATITUDE_STDEV = 5
 LONGITUDE_STDEV = 5
@@ -33,10 +34,16 @@ pub_frequency = 10
 CONTROL_STDEV = 5
 warming_queue = []
 
+
+rospy.init_node("gnss_pub", anonymous=True,  log_level=rospy.DEBUG)
+
+
 # ROS elements.
 global_pose_pub = rospy.Publisher("fix", NavSatFix, queue_size=10)
 local_pose_pub = rospy.Publisher("pose", PoseWithCovarianceStamped, queue_size=10)
 global_hv_pub = rospy.Publisher("hv", Vector3, queue_size=10)
+
+
 
 
 def onPositionChange(self, latitude, longitude, altitude):
@@ -56,14 +63,14 @@ def onPositionChange(self, latitude, longitude, altitude):
 
 	fix = NavSatFix()
 	fix.header.stamp = rospy.Time.now()
-	fix.header.frame_id = "world"
+	fix.header.frame_id = "map"
 	fix.latitude = latitude
 	fix.longitude = longitude
 	fix.altitude = altitude
 	global_pose_pub.publish(fix)
 
 	if (ENABLE_PUBLISH == 0):
-		# Store in the warming_queue and compute 
+		# Store in the warming_queue and compute
 		queue_len = len(warming_queue)
 		warming_queue.append((longitude, latitude))
 
@@ -87,12 +94,12 @@ def onPositionChange(self, latitude, longitude, altitude):
 			lati_average = lati_sum/queue_len
 			long_var = (long_var/queue_len - long_average**2)*DECI_DEGREE_TO_METER**2
 			lati_var = (lati_var/queue_len - lati_average**2)*DECI_DEGREE_TO_METER**2
-			
+
 			rospy.logdebug("Current average longitude: [%.6f]", long_average )
 			rospy.logdebug("Current average latitude: [%.6f]", lati_average )
-			# rospy.logdebug("Current longitude variance: [%f]", long_var )
-			# rospy.logdebug("Current latitude variance: [%f]", lati_var )
-			# rospy.logdebug("Initial longitude stdev: [%f]", np.sqrt(long_var + lati_var)*DECI_DEGREE_TO_METER )
+			#rospy.logdebug("Current longitude variance: [%f]", long_var )
+			#rospy.logdebug("Current latitude variance: [%f]", lati_var )
+			#rospy.logdebug("Initial longitude stdev: [%f]", np.sqrt(long_var + lati_var)*DECI_DEGREE_TO_METER )
 
 			if (np.sqrt(long_var + lati_var) < CONTROL_STDEV):
 				ENABLE_PUBLISH = 1
@@ -106,9 +113,9 @@ def onPositionChange(self, latitude, longitude, altitude):
 				rospy.loginfo("Initial latitude: [%.6f]", lati_average )
 				rospy.loginfo("Initial longitude stdev: [%f]", LONGITUDE_STDEV )
 				rospy.loginfo("Initial latitude stdev: [%f]", LATITUDE_STDEV )
-			else: 
-				# rospy.logdebug("Current average longitude: [%f]", long_average )
-				# rospy.logdebug("Current average latitude: [%f]", lati_average )
+			else:
+				rospy.logdebug("Current average longitude: [%f]", long_average )
+				rospy.logdebug("Current average latitude: [%f]", lati_average )
 				rospy.logdebug("Current position stdev in meter: [%f]", np.sqrt(long_var + lati_var) )
 
 
@@ -118,9 +125,15 @@ def onPositionChange(self, latitude, longitude, altitude):
 		#############################################################
 		# TODO: take in the orientation difference of map and north??
 		#############################################################
-		MOVE_X = (longitude - INITIAL_LONGITUDE)*DECI_DEGREE_TO_METER
-		MOVE_Y = (latitude - INITIAL_LATITUDE)*DECI_DEGREE_TO_METER
-		# MOVE_Z = 
+
+		gps_e , gps_n, gps_u = pm.geodetic2enu(latitude,longitude,0,INITIAL_LATITUDE,INITIAL_LONGITUDE,0)
+
+		MOVE_X = gps_n
+		MOVE_Y = - gps_e
+
+		#MOVE_X = (longitude - INITIAL_LONGITUDE)*DECI_DEGREE_TO_METER
+		#MOVE_Y = (latitude - INITIAL_LATITUDE)*DECI_DEGREE_TO_METER
+		# MOVE_Z =
 		pose = PoseWithCovarianceStamped()
 		pose.header.stamp = rospy.Time.now()
 		pose.header.frame_id = "map"
@@ -143,7 +156,6 @@ def onError(self, code, description):
 	rospy.logerr("----------")
 
 def gnss_pub_node():
-	rospy.init_node("gnss_pub", anonymous=True,  log_level=rospy.DEBUG)
 
 	# Fetch the parameters
 	device_serial_number = rospy.get_param('~device_serial_number')
@@ -166,9 +178,12 @@ def gnss_pub_node():
 
 	#Open your Phidgets and wait for attachment
 	gps0.open()
-	while not rospy.is_shutdown():
-		# Wait for 1/f second.
-		time.sleep(time_sleep)
+
+	rospy.spin()
+
+	#while not rospy.is_shutdown():
+	#	# Wait for 1/f second.
+	#	time.sleep(time_sleep)
 
 	#Close your Phidgets once the program is done.
 	# gps0.close()

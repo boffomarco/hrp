@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from Phidget22.PhidgetException import *
 from Phidget22.Phidget import *
 from Phidget22.Devices.Accelerometer import *
