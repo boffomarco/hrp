@@ -1603,12 +1603,12 @@ bool AutomowerSafe::getGPSData()
             longitude = -(longitudeDegMinutes/100 + (longitudeDegMinutes%100 + longitudeDecimalMinute*0.0001)/60);
         }
 
-        double covariance = (hdop *1.5)* (hdop *1.5);    // Approximate the covariance
+        double covariance = (hdop *1.5) * (hdop *1.5);    // Approximate the covariance
 
         m_navSatFix_msg.header.stamp  = ros::Time::now();
         m_navSatFix_msg.latitude  = latitude;
         m_navSatFix_msg.longitude = longitude;
-        m_navSatFix_msg.altitude  = 0.0;
+        m_navSatFix_msg.altitude  = nbrSatellites; // Saving the number of Satellites instead of
 
         for (int i=0; i<9;i++)
         {
@@ -1622,7 +1622,7 @@ bool AutomowerSafe::getGPSData()
         navSatFix_pub.publish(m_navSatFix_msg);
 
         // Print debug information
-        std:: cout << "nSat : " << int(nbrSatellites) << "  lat: " << latitude << "  long: "  << longitude << " status: " << int(GPS_status) << " " << latitudeDegMinutes  << " " << latitudeDecimalMinute << std::endl;
+        //std:: cout << "nSat : " << int(nbrSatellites) << "  lat: " << latitude << "  long: "  << longitude << " status: " << int(GPS_status) << " " << latitudeDegMinutes  << " " << latitudeDecimalMinute << std::endl;
     }
     return true;
 }
@@ -2783,8 +2783,8 @@ bool AutomowerSafe::update(ros::Duration dt)
         encoder.rticks = current_rv * 1000.0; //deltaRightPulses;
 
         // Keep debug info
-        std::cout << "LeftDist: " << leftDist << " RightDist: " << rightDist;
-        std::cout << " LeftAccum: " << (int)leftPulses << " RightAccum: " << (int)rightPulses << std::endl;
+        //std::cout << "LeftDist: " << leftDist << " RightDist: " << rightDist;
+        //std::cout << " LeftAccum: " << (int)leftPulses << " RightAccum: " << (int)rightPulses << std::endl;
 
         encoder_pub.publish(encoder);
         current_pub.publish(wheelCurrent);
