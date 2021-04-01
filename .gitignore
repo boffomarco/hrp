@@ -2,3 +2,5 @@
 **/*.pyc
 # Ignore vscode utils
 *.vscode
+# Ignore rviz_satellite
+rviz_satellite
