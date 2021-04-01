@@ -37,7 +37,7 @@ class EKF_Euler_GPS():
         self.pose_pred_pub = rospy.Publisher('Pred_EKF', Pose, queue_size=20)
 
         self.pose_ekf_pub = rospy.Publisher('EKF_Euler_GPS', PoseWithCovarianceStamped, queue_size=20)
-        self.odom_ekf_pub = rospy.Publisher('odom_EKF_Euler_GPS', Odometry, queue_size=20)
+        self.odom_ekf_pub = rospy.Publisher('odom_EKF_Euler_GPS_3DoF', Odometry, queue_size=20)
 
         rospy.Subscriber('wheel_encoder', WheelEncoder, self.Enc2PoseEuler)
 
@@ -93,8 +93,8 @@ class EKF_Euler_GPS():
 
         self.z_cov = 12.25 # HDOP = 5, prec = 1.5 -> (((HDOP*prec)^2)/(2*(prec)^2)
         self.z_cov = self.z_cov / 10 # Trying to lower the cov
-        #self.z_th_cov = np.deg2rad(10)
-        self.R = np.diag([self.z_cov, self.z_cov])#, self.z_th_cov])  # Observation x,y position covariance
+        self.z_th_cov = np.deg2rad(10)
+        self.R = np.diag([self.z_cov, self.z_cov, self.z_th_cov])  # Observation x,y position covariance
 
 
 
@@ -136,6 +136,7 @@ class EKF_Euler_GPS():
             x_pred  = self.x_t  - delta_x
             y_pred  = self.y_t  - delta_y
             th_pred = self.th_t + delta_th
+            th_pred = ((th_pred + math.pi) % (2*math.pi)) - math.pi
 
 
             # since all odometry is 6DOF we'll need a quaternion created from yaw
@@ -157,15 +158,23 @@ class EKF_Euler_GPS():
 
             # Check if a new measure has been received before updating
             if(self.new_measure):
+
                 # Update
 
                 x_y  = self.z_x  - x_pred
                 y_y  = self.z_y  - y_pred
-                #th_y = self.z_th - th_pred
+
                 #print("Pred " + str(th_pred) + "  -  GPS " + str(self.z_th))
 
-                #Y = np.array([x_y, y_y, th_y])
-                Y = np.array([x_y, y_y])
+                if(abs(self.z_th - th_pred) > math.pi/3 ): # more than 60 degrees off
+                    self.z_th = th_pred
+                    print("avoid outlier - don't correct th")
+
+                th_y = self.z_th - th_pred
+
+
+                Y = np.array([x_y, y_y, th_y])
+                #Y = np.array([x_y, y_y])
 
                 J_H = self.jacob_h()
 
@@ -175,11 +184,18 @@ class EKF_Euler_GPS():
                 self.xEst = X_Pred + K @ Y
                 self.PEst = (np.eye(3) - K @ J_H) @ PPred
 
+                # Joseph form Covariance Update equation -> Ensure Positive Semi-Definite
+                self.PEst = (np.eye(3) - K @ J_H) @ PPred @ (np.eye(3) - K @ J_H).T + K @ self.R @ K.T
+                # Ensure P is symmetric
+                self.PEst = (self.PEst + self.PEst.T) / 2
+
 
                 self.x_t  = self.xEst[0]
                 self.y_t  = self.xEst[1]
-                #self.th_t = self.xEst[2]
-                self.th_t = th_pred
+                self.th_t = self.xEst[2]
+                self.th_t = ((self.th_t + math.pi) % (2*math.pi)) - math.pi
+                print(self.th_t)
+                #self.th_t = th_pred
 
                 # Wait for the next measurement to update
                 self.new_measure = False
@@ -187,7 +203,6 @@ class EKF_Euler_GPS():
                 # Keep prediction values
                 self.x_t  = x_pred
                 self.y_t  = y_pred
-                #self.th_t = self.xEst[2]
                 self.th_t = th_pred
                 self.PEst = PPred
 
@@ -237,19 +252,19 @@ class EKF_Euler_GPS():
     def NavSat2PoseGPS(self, GPSfix):
         gps_e , gps_n, gps_u = pm.geodetic2enu(GPSfix.latitude,GPSfix.longitude,0,self.lat_mean,self.long_mean,0)
 
-        #delta_z_th = math.atan2((- gps_e - self.z_y),( gps_n - self.z_x))
-        #print(delta_z_th)
-        #self.z_th = delta_z_th
+        delta_z_th = math.atan2((- gps_e - self.z_y),( gps_n - self.z_x))
+        #print(str(delta_z_th))
+        self.z_th = delta_z_th
 
         self.z_x = gps_n
         self.z_y = - gps_e
 
         self.z_cov = GPSfix.position_covariance[0] # Original value of covariance from Automower
-        self.z_cov = self.z_cov/4.5 # Scale value of HDOP (Averaging among n&e covariances and removing 1.5*1.5 scale)
+        self.z_cov = self.z_cov / 4.5 # Scale value of HDOP (Averaging among n&e covariances and removing 1.5*1.5 scale)
         self.z_cov = self.z_cov / 10 # Trying to lower the cov
 
-        #self.R = np.diag([self.z_cov, self.z_cov, self.z_th_cov])  # Observation x,y,th position covariance
-        self.R = np.diag([self.z_cov, self.z_cov])  # Observation x,y position covariance
+        self.R = np.diag([self.z_cov, self.z_cov, self.z_th_cov])  # Observation x,y,th position covariance
+        #self.R = np.diag([self.z_cov, self.z_cov])  # Observation x,y position covariance
 
         # Save that a new measure has been made
         self.new_measure = True
@@ -279,7 +294,7 @@ class EKF_Euler_GPS():
         jH = np.array([
             [1, 0, 0],
             [0, 1, 0]
-            #,[0, 0, 1]
+            ,[0, 0, 1]
         ])
 
         return jH

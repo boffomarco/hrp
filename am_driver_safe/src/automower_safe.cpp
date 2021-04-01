@@ -1608,12 +1608,14 @@ bool AutomowerSafe::getGPSData()
         m_navSatFix_msg.header.stamp  = ros::Time::now();
         m_navSatFix_msg.latitude  = latitude;
         m_navSatFix_msg.longitude = longitude;
-        m_navSatFix_msg.altitude  = nbrSatellites; // Saving the number of Satellites instead of
+        m_navSatFix_msg.altitude  = nbrSatellites; // Saving the number of Satellites instead of 0
 
         for (int i=0; i<9;i++)
         {
             m_navSatFix_msg.position_covariance[i]  = covariance;
         }
+        m_navSatFix_msg.position_covariance[1] = north;
+        m_navSatFix_msg.position_covariance[2] = east;
 
         m_navSatFix_msg.position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
         m_navSatFix_msg.status.status = GPS_status;
@@ -1621,7 +1623,7 @@ bool AutomowerSafe::getGPSData()
 
         navSatFix_pub.publish(m_navSatFix_msg);
 
-        // Print debug information
+        // Debug information
         //std:: cout << "nSat : " << int(nbrSatellites) << "  lat: " << latitude << "  long: "  << longitude << " status: " << int(GPS_status) << " " << latitudeDegMinutes  << " " << latitudeDecimalMinute << std::endl;
     }
     return true;
@@ -2712,14 +2714,14 @@ bool AutomowerSafe::update(ros::Duration dt)
         if ((fabs(leftDist) > 1.0) || (fabs(rightDist) > 1.0))
         {
             DEBUG_LOG("Automower::Strange distance? - zeroint counters from mower");
-            // Keep debug info
-            ROS_INFO("Automower::Strange distance? => ld = %f, rd = %f", leftDist, rightDist);
+            // Debug info
+            //ROS_INFO("Automower::Strange distance? => ld = %f, rd = %f", leftDist, rightDist);
             leftDist = 0;
             rightDist = 0;
         }
 
-        // Keep debug info
-        ROS_INFO("Automower::ld = %f, rd = %f", leftDist, rightDist);
+        // Debug info
+        //ROS_INFO("Automower::ld = %f, rd = %f", leftDist, rightDist);
 
         double distance = (rightDist + leftDist) / 2.0; // v*s
         double delta_yaw = -(leftDist - rightDist) / AUTMOWER_WHEEL_BASE_WIDTH; // w*s
@@ -2729,7 +2731,7 @@ bool AutomowerSafe::update(ros::Duration dt)
         double vYaw = (yaw - last_yaw) / dt.toSec();
         last_yaw = yaw;
 
-        // TODO - Try to check with different differential integrations
+        // TODO - Try to check with different differential integrations -> RK2&RK4 provide little improvements
 
         double xdist = distance * cos(yaw);
         double ydist = distance * sin(yaw);
@@ -2740,13 +2742,14 @@ bool AutomowerSafe::update(ros::Duration dt)
         /************************************************************************************
          * Odom position seems reliable, yet twist is very wrong. Might The issue lie in dt?
          * Eventually improve its accuracy
+         * --> Twist reflects the cmd_vel topic
         *************************************************************************************/
 
         xpos = xpos + xdist;
         ypos = ypos + ydist;
 
-        // Keep debug info
-        ROS_INFO("Automower::pos: dt=%f xpos=%f, ypos=%f", (dt.toSec()), (float)xpos, (float)ypos);
+        // Debug info
+        //ROS_INFO("Automower::pos: dt=%f xpos=%f, ypos=%f", (dt.toSec()), (float)xpos, (float)ypos);
 
         // Set position into the pose
         robot_pose.pose.position.x = xpos;
@@ -2782,7 +2785,7 @@ bool AutomowerSafe::update(ros::Duration dt)
         encoder.lticks = current_lv * 1000.0; //deltaLeftPulses;
         encoder.rticks = current_rv * 1000.0; //deltaRightPulses;
 
-        // Keep debug info
+        // Debug info
         //std::cout << "LeftDist: " << leftDist << " RightDist: " << rightDist;
         //std::cout << " LeftAccum: " << (int)leftPulses << " RightAccum: " << (int)rightPulses << std::endl;
 
