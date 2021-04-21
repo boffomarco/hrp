@@ -180,7 +180,7 @@ def gnss_pub_node():
 
 	#Open your Phidgets and wait for attachment
 	gps0.open()
-
+	print("W")
 	rospy.spin()
 
 	#while not rospy.is_shutdown():
