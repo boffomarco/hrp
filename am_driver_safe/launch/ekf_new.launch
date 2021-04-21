@@ -1,0 +1,24 @@
+<launch>
+  <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se_new" clear_params="true">
+    <rosparam command="load" file="$(find am_driver_safe)/params/ekf_new.yaml" />
+
+   <!--  Placeholder for output topic remapping
+    <remap from="odometry/filtered" to=""/>
+    <remap from="accel/filtered" to=""/>
+    -->
+
+  </node>
+
+  <node pkg="robot_localization" type="navsat_transform_node" name="navsat_transform_node" respawn="true">
+
+    <param name="magnetic_declination_radians" value="0"/>
+
+    <param name="yaw_offset" value="0"/>
+
+    <remap from="/imu/data" to="/imu_right/imu/data/processed " />
+    <remap from="/gps/fix" to="/GPSfix" />
+    <remap from="/odometry/filtered" to="/odom" />
+
+  </node>
+
+</launch>

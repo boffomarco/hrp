@@ -19,7 +19,7 @@
     <!-- # optional param serial_number, default is -1 -->
     <param name="serial" value="596088"/>
 
-    <param name="frame_id" value="imu02_test"/>
+    <param name="frame_id" value="imu02_link"/>
 
 
     # compass correction params (see http://www.phidgets.com/docs/1044_User_Guide)

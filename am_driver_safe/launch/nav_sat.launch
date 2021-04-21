@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<launch>
+
+
+<!-- <node pkg="tf2_ros" type="static_transform_publisher" name="map_odom" args="0 0 0 0 0 0 map odom" /> -->
+
+<!-- https://github.com/mikkelkh/FieldSAFE/blob/master/ros/src/demo/launch/robot_localization.launch -->
+<!-- 1) navsat_transform_node is used to produce odometry from GPS coordinates (only x,y,z position) -->
+<node pkg="robot_localization" type="navsat_transform_node" name="navsat_to_gps_odometry" respawn="false" output="screen">
+  <param name="frequency" value="20"/>
+   <param name="yaw_offset" value="0"/>
+   <param name="magnetic_declination_radians" value="0"/>
+  <param name="zero_altitude" value="true"/>
+  <param name="broadcast_utm_transform" value="false"/>
+  <param name="publish_filtered_gps" value="true"/>
+  <param name="use_odometry_yaw" value="false"/>
+  <param name="wait_for_datum" value="false"/>
+  <param name="world_frame" value="odom"/>
+  <!-- Input -->
+  <remap from="odometry/filtered" to="odom"/>
+  <remap from="gps/fix" to="GPSfix"/>
+  <remap from="imu/data" to="imu_left/imu/data/processed"/>
+
+    <!--
+        <remap from="odom" to="odometry/filtered"/>
+        <remap from="GPSfix" to="gps/fix"/>
+        <remap from="imu_left/imu/data/processed" to="imu/data"/>
+    -->
+  <!-- Output -->
+</node>
+
+</launch>

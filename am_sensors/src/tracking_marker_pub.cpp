@@ -1,14 +1,14 @@
 /*
- * Subscibes to the pose topics and publishes the traces in rviz,
+ * Subscribes to the pose topics and publishes the traces in rviz,
  * in red, orange, yellow, green, cyan, blue, purple colors.
- * 
+ *
  * By default, the trackers are published in /map frame,
- * and pose are in nav_msgs/Odometry or 
+ * and pose are in nav_msgs/Odometry or
  * geometry_msgs/PoseWithCovarianceStamped
- * 
- * TODO: 
+ *
+ * TODO:
  *     	0. Add frame attribute to transform data in /odom to /map
- 		1. Add covariance ellipse. 
+ 		1. Add covariance ellipse.
  *		2. Extend into generic topic subscriber.
  */
 
@@ -41,7 +41,7 @@ public:
 	Tracker() {}
 
 	Tracker(ros::NodeHandle *nh, int frequency, int color_number, std::string pose_topic, int seq)
-	{	
+	{
 		// ROS_INFO_STREAM("In a tracker now.");
 		this->frequency_ = frequency;
 		this->color_number_ = color_number;
@@ -67,7 +67,7 @@ public:
 			{0.5, 0.0, 1.0}
 		};
 
-		marker_.header.frame_id = "/map";
+		marker_.header.frame_id = "odom";
 		marker_.header.stamp = pose_tmp_.header.stamp;
 		marker_.ns = "points";
 		marker_.action = visualization_msgs::Marker::ADD;
@@ -84,13 +84,13 @@ public:
 		// Marker color is sequentially red, orange, yellow, green, cyan, blue, purple.
 		marker_.color.a = 1.0;
 		marker_.color.r = rgbmat[color_number_ -1][0];
-		marker_.color.g = rgbmat[color_number_ -1][1];	
+		marker_.color.g = rgbmat[color_number_ -1][1];
 		marker_.color.b = rgbmat[color_number_ -1][2];
 
 	}
 
 	void odom_callback(const nav_msgs::Odometry &msg)
-	{	
+	{
 		// ROS_INFO_STREAM("In pose_callback now.");
 		pose_tmp_ = msg;
 		geometry_msgs::Point p;
@@ -102,7 +102,7 @@ public:
 
 	// Overload pose_callback to receive GNSS data.
 	void pose_callback(const geometry_msgs::PoseWithCovarianceStamped &msg)
-	{	
+	{
 		// ROS_INFO_STREAM("In pose_callback now.");
 		pose_tmp_.header.stamp = msg.header.stamp;
 		geometry_msgs::Point p;
@@ -144,14 +144,14 @@ int main(int argc, char** argv)
 	int color_number = 0;
 	int is_odom_type = 0;
 
-	std::stringstream ss_tmp;	
+	std::stringstream ss_tmp;
 	std::string pose_topic_tmp;
 	std::string data_type_tmp;
 	std::string color_tmp;
 	std::string pose_topic;
 	std::string data_type;
 	std::string color;
-	
+
 
 	ros::init(argc, argv, "tracking_marker_pub");
 	ros::NodeHandle nh("~");
@@ -162,9 +162,9 @@ int main(int argc, char** argv)
 	ROS_INFO_STREAM("Node initialized with count = "<< count);
 
 	// Initialize trackers.
-    Tracker* tc_arr = new Tracker[count]; 
+    Tracker* tc_arr = new Tracker[count];
 	for (i = 0; i < count; i++)
-	{	
+	{
 		is_odom_type = 0;
 		// ROS_INFO_STREAM("In the for loop now. i = " << i);
 		seq = i + 1;
@@ -203,7 +203,7 @@ int main(int argc, char** argv)
 		{
 			tc_arr[i].pose_sub = nh.subscribe(pose_topic, 10, &Tracker::pose_callback, &tc_arr[i]);
 		}
-	}	
+	}
 
 	while(ros::ok())
 	{

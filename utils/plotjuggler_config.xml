@@ -1,0 +1,99 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root version="2.3.8">
+ <tabbed_widget parent="main_window" name="Main Window">
+  <Tab containers="1" tab_name="tab1">
+   <Container>
+    <DockSplitter sizes="1" orientation="-" count="1">
+     <DockSplitter sizes="0.5;0.5" orientation="|" count="2">
+      <DockArea name="...">
+       <plot mode="XYPlot" style="Lines">
+        <range left="-1.280509" bottom="1.366119" top="25.202155" right="15.663542"/>
+        <limitY/>
+        <curve color="#17becf" curve_x="/Odom_GPS/pose/position/x" name="/Odom_GPS/pose/position/[x;y]" curve_y="/Odom_GPS/pose/position/y"/>
+        <curve color="#bcbd22" curve_x="/Odom_Full_EKF/pose/position/x" name="/Odom_Full_EKF/pose/position/[x;y]" curve_y="/Odom_Full_EKF/pose/position/y"/>
+        <curve color="#f14cc1" curve_x="/Odom_Control/pose/position/x" name="/Odom_Control/pose/position/[x;y]" curve_y="/Odom_Control/pose/position/y"/>
+       </plot>
+      </DockArea>
+      <DockSplitter sizes="0.250564;0.249436;0.250564;0.249436" orientation="-" count="4">
+       <DockArea name="...">
+        <plot mode="TimeSeries" style="Lines">
+         <range left="29.202350" bottom="-122.710125" top="114.502332" right="129.134960"/>
+         <limitY/>
+         <curve color="#d62728" name="/imu_left/imu/data/enu/orientation/yaw_deg"/>
+         <curve color="#f14cc1" name="/imu_right/imu/data/enu/orientation/yaw_deg"/>
+         <curve color="#1f77b4" name="/Odom_Full_EKF/pose/orientation/yaw_deg"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot mode="TimeSeries" style="Lines">
+         <range left="28.629741" bottom="-0.011341" top="0.464971" right="129.134960"/>
+         <limitY/>
+         <curve color="#1ac938" name="/Odom_Full_EKF/twist/linear/x"/>
+         <curve color="#17becf" name="/Odom_Control/twist/linear/x"/>
+         <curve color="#1f77b4" name="/odom/twist/linear/x"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot mode="TimeSeries" style="Lines">
+         <range left="28.629741" bottom="-1.241131" top="1.228251" right="129.134960"/>
+         <limitY/>
+         <curve color="#1f77b4" name="/imu_left/imu/data/enu/angular_velocity/z"/>
+         <curve color="#9467bd" name="/imu_right/imu/data/enu/angular_velocity/z"/>
+         <curve color="#d62728" name="/Odom_Full_EKF/twist/angular/z"/>
+         <curve color="#9467bd" name="/Odom_Control/twist/angular/z"/>
+         <curve color="#bcbd22" name="/odom/twist/angular/z"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot mode="TimeSeries" style="Lines">
+         <range left="29.202350" bottom="-2.880206" top="3.293556" right="129.134960"/>
+         <limitY/>
+         <curve color="#1ac938" name="/imu_left/imu/data/enu/linear_acceleration/y"/>
+         <curve color="#ff7f0e" name="/imu_right/imu/data/enu/linear_acceleration/y"/>
+         <curve color="#1ac938" name="/Odom_Full_EKF/twist/linear/x"/>
+         <curve color="#ff7f0e" name="/Odom_Full_EKF/twist/linear/z"/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <currentTabIndex index="0"/>
+ </tabbed_widget>
+ <use_relative_time_offset enabled="1"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <!-- - - - - - - - - - - - - - - -->
+ <Plugins>
+  <plugin ID="DataLoad CSV">
+   <default time_axis=""/>
+  </plugin>
+  <plugin ID="DataLoad ROS bags">
+   <use_header_stamp value="true"/>
+   <use_renaming_rules value="true"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="10"/>
+  </plugin>
+  <plugin ID="DataLoad ULog"/>
+  <plugin ID="MQTT Subscriber"/>
+  <plugin ID="ROS Topic Subscriber">
+   <use_header_stamp value="true"/>
+   <use_renaming_rules value="true"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="100"/>
+  </plugin>
+  <plugin ID="UDP Server"/>
+  <plugin ID="WebSocket Server"/>
+  <plugin ID="ZMQ Subscriber"/>
+  <plugin status="idle" ID="ROS /rosout Visualization"/>
+  <plugin status="idle" ID="ROS Topic Re-Publisher"/>
+ </Plugins>
+ <!-- - - - - - - - - - - - - - - -->
+ <previouslyLoaded_Datafiles/>
+ <previouslyLoaded_Streamer name="ROS Topic Subscriber"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <customMathEquations/>
+ <snippets/>
+ <!-- - - - - - - - - - - - - - - -->
+</root>
+

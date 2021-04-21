@@ -4,3 +4,5 @@
 *.vscode
 # Ignore rviz_satellite
 rviz_satellite
+# ignore simulation
+simulation

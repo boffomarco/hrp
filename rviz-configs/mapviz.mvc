@@ -1,0 +1,56 @@
+capture_directory: "~"
+fixed_frame: map
+target_frame: <none>
+fix_orientation: false
+rotate_90: false
+enable_antialiasing: true
+show_displays: true
+show_status_bar: true
+show_capture_tools: true
+window_width: 1920
+window_height: 1163
+view_scale: 0.1351305
+offset_x: -7.495631
+offset_y: -11.71168
+use_latest_transforms: true
+background: "#a0a0a4"
+displays:
+  - type: mapviz_plugins/tile_map
+    name: new display
+    config:
+      visible: true
+      collapsed: false
+      custom_sources:
+        []
+      bing_api_key: Aq1CCyNUOW4As0QOsIimH80htYlK23Qz9_j2Wi4s0DqyoCOCqmDCoZRCzuSMgAql
+      source: Bing Maps (terrain)
+  - type: mapviz_plugins/navsat
+    name: new display
+    config:
+      visible: true
+      collapsed: false
+      topic: /GPSfix
+      color: "#204a87"
+      draw_style: lines
+      position_tolerance: 0
+      buffer_size: 0
+  - type: mapviz_plugins/navsat
+    name: new display
+    config:
+      visible: true
+      collapsed: false
+      topic: /gnss_left/fix
+      color: "#5c3566"
+      draw_style: lines
+      position_tolerance: 0
+      buffer_size: 0
+  - type: mapviz_plugins/navsat
+    name: new display
+    config:
+      visible: true
+      collapsed: false
+      topic: /gnss_right/fix
+      color: "#a40000"
+      draw_style: lines
+      position_tolerance: 0
+      buffer_size: 0
