@@ -9,7 +9,7 @@ import gmplot
 print("Open Plotter"))
 
 # Create the map plotter:
-apikey = 'AIzaSyDaCXU0_B6UjP5J3AovsroLRK4jvdTLHd4'
+apikey = "APIKEY"
 gmap = gmplot.GoogleMapPlotter(GPSfix[0][0], GPSfix[0][1], 18, apikey=apikey, map_type='hybrid')
 
 
