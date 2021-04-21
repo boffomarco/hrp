@@ -146,6 +146,7 @@ target_link_libraries(path_follow
 install(PROGRAMS
   scripts/hrp_teleop.py
   scripts/nanoKontrol2.py
+  scripts/test_script.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

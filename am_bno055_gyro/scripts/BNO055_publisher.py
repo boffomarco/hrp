@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 import logging
 import time
 import rospy
@@ -6,7 +6,11 @@ import numpy as np
 from argparse import ArgumentParser
 
 from sensor_msgs.msg import Imu
-from am_post_processing_cloud import BNO055
+from am_bno055_gyro import BNO055
+
+import sys
+sys.settrace
+import traceback
 
 msg = Imu()
 rospy.init_node('BNO055_imu', anonymous=True)
@@ -49,7 +53,9 @@ while not rospy.is_shutdown():
         print('Reading BNO055 data, press Ctrl-C to quit...')
 
         break
-    except:
+    except Exception as e:
+        print(e)
+        print(traceback.print_exc())
         print("Problem intiialize BNO055 retryting")
     time.sleep(3)
 
