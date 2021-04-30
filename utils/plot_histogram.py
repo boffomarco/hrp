@@ -6,14 +6,19 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 
 
-gps = False
-imu = True
-imu_left = True
-imu_right = True
+gps = True
+imu = False
+imu_left = False
+imu_right = False
 
 
 folder = "/home/marco/Videos/"
 filename = "2021-04-01-16-21-10"
+
+
+folder = "/media/marco/writable/home/ubuntu/Bags/"
+filename = "2021-04-21-12-42-20"
+
 path = folder + filename + ".bag"
 
 bag = rosbag.Bag(path)
@@ -24,15 +29,23 @@ if(gps):
 
     lat = list()
     lon = list()
+    time_i = 0 # Initial time
+    time_f = 0 # Final time
     for topic, msg, t in bag.read_messages(topics=['/GPSfix']):
-        lat.append(msg.latitude)
-        lon.append(msg.longitude)
+        if( time_i == 0):
+            time_i = t
+        if(int(str(time_f)) - int(str(time_i)) < int(120*10e8)):  # First 120 seconds
+            print(int(str(time_f)) - int(str(time_i)))
+            lat.append(msg.latitude)
+            lon.append(msg.longitude)
+        time_f = t
+    print(time_f - time_i) # Time difference in seconds*10^8
+    print(time_i)
+    print(time_f)
 
     bag.close()
 
     axs[0].hist(lat)
-
-
     axs[1].hist(lon)
 
     plt.show()

@@ -12,7 +12,7 @@ lat = 59.40963333
 lon = 17.94516667
 
 # Create the map plotter:
-apikey = 'AIzaSyCKYrM5uXHCxsWOHNv-bxW6DMutzuunexg'
+apikey = 'apikey'
 gmap = gmplot.GoogleMapPlotter(lat, lon, 18, apikey=apikey, map_type='hybrid')
 
 

@@ -1,0 +1,30 @@
+<launch>
+  <!-- In case the gps are launched seperatedly,-->
+  <!-- especially when gps are only launched on Pi3 -->
+
+  <!-- Select which sensors are to be used -->
+  <arg name="useLeftGPS"   default="True" />
+  <arg name="useRightGPS"  default="True" />
+
+  <!-- convert the original gps measurement -->
+  <group if="$(arg useLeftGPS)"
+    ns="gps_left">
+    <node name="gps_left_pub"
+          pkg="am_sensors"
+          type="gps_pub.py">
+      <param name="device_serial_number"  value="285614" />
+
+    </node>
+  </group>
+
+  <group if="$(arg useRightGPS)"
+    ns="gps_right">
+    <node name="gps_right_pub"
+          pkg="am_sensors"
+          type="gps_pub.py">
+    <param name="device_serial_number" value="285332" />
+
+    </node>
+  </group>
+
+</launch>

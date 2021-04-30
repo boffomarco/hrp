@@ -17,8 +17,6 @@ import math
 
 import threading
 
-import matplotlib.pyplot as plt
-from scipy.spatial.transform import Rotation as Rot
 
 import numpy as np
 
@@ -33,7 +31,7 @@ class Full_EKF():
     def __init__(self):
 
         # Define name of the Node
-        rospy.init_node("Full_EKF", anonymous=True)
+        rospy.init_node("Full_EKF_RPi", anonymous=True)
 
         # Define the self.lock to allow multi-threading
         self.lock = threading.Lock()
@@ -49,7 +47,7 @@ class Full_EKF():
         rospy.Subscriber('cmd_vel', Twist, self.Control)
         self.control_measure = False
         self.control_t = -1
-        self.control_state = np.array([0.0, 0.0])
+        self.control_state = np.array([0.0, 0.0, 0.0])
 
         rospy.Subscriber('odom', Odometry, self.Odometer)
         self.odometer_measure = False
@@ -174,10 +172,12 @@ class Full_EKF():
                         0.0,
                         self.control_state[0] - self.X_t[3],
                         self.control_state[1] - self.X_t[4],
-                        0.0])
+                        self.control_state[2] - self.X_t[5]])
+
+        self.control_state[2] = 0
 
         steps = 10
-        B = np.diag(np.array([0,0,0,1/steps,1/steps,0]))
+        B = np.diag(np.array([0,0,0,1/steps,1/steps,1/steps]))
 
         # Make sure the execution is safe
         self.lock.acquire()
@@ -342,10 +342,13 @@ class Full_EKF():
         z_x_dot = cmd_vel.linear.x
         z_yaw_dot = cmd_vel.angular.z
 
+        z_delta_x_dot = z_x_dot - self.control_state[0]
+
         z_x_dot_cov = 0.001
         z_yaw_dot_cov = 0.01
+        z_yaw_dot_cov = 0.01
 
-        self.control_state = np.array([z_x_dot, z_yaw_dot])
+        self.control_state = np.array([z_x_dot, z_yaw_dot, z_delta_x_dot])
         print("         Control \t\t" + str(self.control_state))
 
         # Send the Update to Ros
@@ -658,96 +661,6 @@ class Full_EKF():
         print("     Imu Right \t\t\t\t" + str(self.imu_right_state))
 
 
-
-def plot_covariance_ellipse(xEst, PEst):  # pragma: no cover
-    Pxy = PEst[0:2, 0:2]
-    eigval, eigvec = np.linalg.eig(Pxy)
-
-    if eigval[0] >= eigval[1]:
-        bigind = 0
-        smallind = 1
-    else:
-        bigind = 1
-        smallind = 0
-
-    t = np.arange(0, 2 * math.pi + 0.1, 0.1)
-    a = math.sqrt(eigval[bigind])
-    b = math.sqrt(eigval[smallind])
-    x = [a * math.cos(it) for it in t]
-    y = [b * math.sin(it) for it in t]
-    angle = math.atan2(eigvec[1, bigind], eigvec[0, bigind])
-    rot = Rot.from_euler('z', angle).as_matrix()[0:2, 0:2]
-    fx = rot @ (np.array([x, y]))
-    px = np.array(fx[0, :] + xEst[0]).flatten()
-    py = np.array(fx[1, :] + xEst[1]).flatten()
-    return px, py
-
-
-def plotFinalCovarianceP(P, m):
-
-    fig = plt.figure(figsize=(6, 6))
-
-    #print(P)
-
-    im = plt.imshow(P, interpolation="none", cmap=plt.get_cmap('binary'))
-
-    plt.title('Covariance Matrix $P$ (after %i Filter Steps)' % (m))
-
-    ylocs, ylabels = plt.yticks()
-    # set the locations of the yticks
-    plt.yticks(np.arange(6))
-    # set the locations and labels of the yticks
-    plt.yticks(np.arange(6),('$x$', '$y$', '$\\theta$', '$v$', '$\dot \\theta$', '$a$'), fontsize=22)
-
-    xlocs, xlabels = plt.xticks()
-    # set the locations of the yticks
-    plt.xticks(np.arange(6))
-    # set the locations and labels of the yticks
-    plt.xticks(np.arange(6),('$x$', '$y$', '$\\theta$', '$v$', '$\dot \\theta$', '$a$'), fontsize=22)
-
-    """
-    plt.xlim([-0.5,4.5])
-    plt.ylim([4.5, -0.5])
-    """
-
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
-    divider = make_axes_locatable(plt.gca())
-    cax = divider.append_axes("right", "5%", pad="3%")
-    plt.colorbar(im, cax=cax)
-
-
-    plt.tight_layout()
-
-    plt.pause(1)
-
-
-def plotHistory(H, m, title):
-
-    fig, (ax0, ax1, ax2, ax3, ax4, ax5) = plt.subplots(6, sharex=True)
-    fig.suptitle(title + ' (after %i Filter Steps)' % (m))
-    p0 = ax0.plot(range(m), H[0], label='$x$')
-    p1 = ax1.plot(range(m), H[1], label='$y$')
-    p2 = ax2.plot(range(m), H[2], label='$\\theta$')
-    p3 = ax3.plot(range(m), H[3], label='$v$')
-    p4 = ax4.plot(range(m), H[4], label='$\dot \\theta$')
-    p5 = ax5.plot(range(m), H[5], label='$a$')
-
-    ax0.legend(shadow=True, fancybox=True)
-    ax1.legend(shadow=True, fancybox=True)
-    ax2.legend(shadow=True, fancybox=True)
-    ax3.legend(shadow=True, fancybox=True)
-    ax4.legend(shadow=True, fancybox=True)
-    ax5.legend(shadow=True, fancybox=True)
-
-    plt.xlabel('Filter Steps')
-    plt.ylabel('')
-    plt.legend(loc='best')
-
-
-    plt.pause(1)
-
-
-
 if __name__ == '__main__':
 
     print("Start Full_EKF")
@@ -785,17 +698,6 @@ if __name__ == '__main__':
         # Covariance P_t
         P = np.zeros((6, 1))
 
-        # history
-        hDt = list()
-        hX = X
-        hG = X
-        hZ = Z
-        hK = K
-        hP = P
-        hPx = list()
-        hPy = list()
-
-
         print("Start fusion")
         # Start with the fusion
         end = rospy.get_time()
@@ -811,32 +713,6 @@ if __name__ == '__main__':
             # Update step
             full_ekf.Update()
 
-            # store data history
-            hX = np.hstack((hX, full_ekf.X_t.reshape(6,1)))
-            hG = np.hstack((hX, full_ekf.X_ground.reshape(6,1)))
-            hZ = np.hstack((hZ, np.array([full_ekf.gps_state[0],full_ekf.gps_state[1],full_ekf.gps_state[2]]).reshape(3,1)))
-            hK = np.hstack((hK, np.array([full_ekf.K[0,0], full_ekf.K[1,0], full_ekf.K[2,0], full_ekf.K[3,0], full_ekf.K[4,0], full_ekf.K[5,0]]).reshape(6,1)))
-            hP = np.hstack((hP, np.array([full_ekf.P_t[0,0], full_ekf.P_t[1,1], full_ekf.P_t[2,2], full_ekf.P_t[3,3], full_ekf.P_t[4,4], full_ekf.P_t[5,5]]).reshape(6,1)))
-
-            """ Plot in real time (time consuming)
-            plt.cla()
-            # for stopping simulation with the esc key.
-            plt.gcf().canvas.mpl_connect('key_release_event',
-                    lambda event: [exit(0) if event.key == 'escape' else None])
-
-            plt.plot(hX[0, :].flatten(),
-                    hX[1, :].flatten(), "-b")
-            plt.plot(hZ[0, :],
-                    hZ[1, :], ".g")
-            px, py = plot_covariance_ellipse(full_ekf.X_t, full_ekf.P_t)
-            plt.plot(px, py, "--r")
-            hPx.append(px)
-            hPy.append(py)
-            plt.axis("equal")
-            plt.grid(True)
-            plt.pause(1/hertz)
-            """
-
             # Sleep before next iteration
             rate.sleep()
 
@@ -847,36 +723,9 @@ if __name__ == '__main__':
 
         pass
 
-
-    #for i in range(len(hPx)):
-    #    plt.plot(hPx[i], hPy[i], "--r")
-
     print(full_ekf.X_t)
     print(full_ekf.P_t)
     print("End Full_EKF")
-
-    plotFinalCovarianceP(full_ekf.P_t, hP.shape[1])
-    plotHistory(hK, hK.shape[1], 'Innovation Gain $K$')
-    plotHistory(hP, hP.shape[1], 'Covariance Matrix $P$')
-
-    plt.figure(10)
-    plt.cla()
-    # for stopping simulation with the esc key.
-    plt.gcf().canvas.mpl_connect('key_release_event',
-            lambda event: [exit(0) if event.key == 'escape' else None])
-    plt.plot(hX[0, :].flatten(),
-            hX[1, :].flatten(), "-b")
-    plt.plot(hZ[0, :],
-            hZ[1, :], ".r")
-    plt.plot(hG[0, :].flatten(),
-            hG[1, :].flatten(), "-g")
-
-
-    plt.figure(5)
-    bins =  np.arange(0,0.01,0.0005)
-    plt.hist(hDt,bins = bins)
-    plt.pause(1)
-
 
     # Wait for the user input to terminate the program
     input("Press any key to terminate the program\n")
