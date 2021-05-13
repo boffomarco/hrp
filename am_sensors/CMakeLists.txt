@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   visualization_msgs
   tf2_geometry_msgs
+  libphidget22
 )
 
 ## System dependencies are found with CMake's conventions
@@ -110,7 +111,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES am_sensors
-   CATKIN_DEPENDS am_driver
+   CATKIN_DEPENDS am_driver libphidget22
 #  DEPENDS system_lib
 )
 
@@ -141,6 +142,8 @@ ${catkin_INCLUDE_DIRS}
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(tracking_marker_pub src/tracking_marker_pub.cpp)
 add_executable(imu_process src/imu_process.cpp)
+add_executable(gps_pub src/gps_pub.cpp)
+add_executable(gps src/gps.cpp)
 
 
 ## Rename C++ executable without prefix
@@ -156,11 +159,18 @@ add_executable(imu_process src/imu_process.cpp)
 
 ## Specify libraries to link a library or executable target against
 
- target_link_libraries(tracking_marker_pub 
+ target_link_libraries(tracking_marker_pub
    ${catkin_LIBRARIES}
  )
 
  target_link_libraries(imu_process
+   ${catkin_LIBRARIES}
+ )
+
+ target_link_libraries(gps_pub
+   ${catkin_LIBRARIES}
+ )
+ target_link_libraries(gps
    ${catkin_LIBRARIES}
  )
 

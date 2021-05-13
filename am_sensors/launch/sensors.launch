@@ -1,0 +1,19 @@
+<launch>
+
+  <!-- Select which sensors are to be used -->
+  <arg name="useGPSs" default="True" />
+  <arg name="useIMUs" default="True" />
+
+
+  <!-- Launch GPSs -->
+  <group if="$(arg useGPSs)">
+    <include file="$(find am_sensors)/launch/gps.launch" />
+  </group>
+
+
+  <!-- Launch IMUs -->
+  <group if="$(arg useIMUs)">
+    <include file="$(find am_sensors)/launch/imus_basic.launch" />
+  </group>
+
+</launch>

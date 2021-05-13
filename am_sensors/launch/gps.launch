@@ -11,7 +11,7 @@
     ns="gps_left">
     <node name="gps_left_pub"
           pkg="am_sensors"
-          type="gps_pub.py">
+          type="gps"> <!-- type="gps_pub.py"> -->
       <param name="device_serial_number"  value="285614" />
 
     </node>
@@ -21,7 +21,7 @@
     ns="gps_right">
     <node name="gps_right_pub"
           pkg="am_sensors"
-          type="gps_pub.py">
+          type="gps"> <!-- type="gps_pub.py"> -->
     <param name="device_serial_number" value="285332" />
 
     </node>

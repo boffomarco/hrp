@@ -25,7 +25,7 @@
   <param name="robot_description" unless="$(arg driver_only)" command="xacro --inorder '$(find am_description)/urdf/automower.urdf.xacro'" />
 
   <!-- For the additional sensors -->
-  <arg name="useIMUGNSS" default="0" />
+  <arg name="useGPSIMU" default="True" />
 
   <!-- Start the am_driver -->
   <node name="am_driver_safe"
@@ -78,7 +78,7 @@
 
 
   <!-- For the additional sensors -->
-    <group if="$(arg useIMUGNSS)" >
+    <group if="$(arg useGPSIMU)" >
       <include file="$(find am_sensors)/launch/sensors.launch" />
     </group>
 

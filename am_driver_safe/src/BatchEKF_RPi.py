@@ -62,6 +62,18 @@ class Full_EKF():
         self.gps_bias = np.array([0.0, 0.0, 0.0])
         self.gps_var = np.array([0.0, 0.0, 0.0])
 
+        rospy.Subscriber('gps_left', NavSatFix, self.GPSLeft)
+        self.gps_measure = False
+        self.gps_state = np.array([0.0, 0.0, 0.0])
+        self.gps_bias = np.array([0.0, 0.0, 0.0])
+        self.gps_var = np.array([0.0, 0.0, 0.0])
+
+        rospy.Subscriber('gps_right', NavSatFix, self.GPSRight)
+        self.gps_measure = False
+        self.gps_state = np.array([0.0, 0.0, 0.0])
+        self.gps_bias = np.array([0.0, 0.0, 0.0])
+        self.gps_var = np.array([0.0, 0.0, 0.0])
+
         rospy.Subscriber('imu_left/imu/data_raw', Imu, self.ImuLeft)
         self.imu_left_measure = False
         self.imu_left_t = now
@@ -235,7 +247,7 @@ class Full_EKF():
         finally:
             self.lock.release() # release self.lock, no matter what
 
-        print("UpdateNoMeasures \t" + str(self.X_t[0:3]))
+        #print("UpdateNoMeasures \t" + str(self.X_t[0:3]))
 
 
     # Update step with the measurements
@@ -289,7 +301,7 @@ class Full_EKF():
             # Ensure P is symmetric
             self.P_t = (self.P_t + self.P_t.T) / 2
 
-            print("Update \t\t\t" + str(self.X_t[0:3]))
+            #print("Update \t\t\t" + str(self.X_t[0:3]))
         else:
             # Keep just the prediction if no new measurements have been received
             self.UpdateNoMeasures()
@@ -349,7 +361,7 @@ class Full_EKF():
         z_yaw_dot_cov = 0.01
 
         self.control_state = np.array([z_x_dot, z_yaw_dot, z_delta_x_dot])
-        print("         Control \t\t" + str(self.control_state))
+        #print("         Control \t\t" + str(self.control_state))
 
         # Send the Update to Ros
         header = Header()
@@ -369,6 +381,8 @@ class Full_EKF():
         twist_covariance = [0] * 36
         twist_covariance[0] = z_x_dot_cov
         twist_covariance[35] = z_yaw_dot_cov
+
+        cmd_vel.linear.z = self.control_state[2]
 
         twist_control = TwistWithCovariance(cmd_vel, twist_covariance)
 
@@ -491,7 +505,7 @@ class Full_EKF():
         finally:
             self.lock.release() # release self.lock, no matter what
 
-        print("     Odometer \t\t\t" + str(self.odometer_state))
+        #print("     Odometer \t\t\t" + str(self.odometer_state))
 
 
 
@@ -554,7 +568,7 @@ class Full_EKF():
             finally:
                 self.lock.release() # release self.lock, no matter what
 
-            print("     GPS \t\t" + str(self.gps_state))
+            #print("     GPS \t\t" + str(self.gps_state))
 
             # Send the Update to ROS
             header = Header()
@@ -618,7 +632,7 @@ class Full_EKF():
             self.lock.release() # release self.lock, no matter what
 
 
-        print("     Imu Left \t\t\t\t" + str(self.imu_left_state))
+        #print("     Imu Left \t\t\t\t" + str(self.imu_left_state))
 
 
     def ImuRight(self, imu):
@@ -658,7 +672,7 @@ class Full_EKF():
         finally:
             self.lock.release() # release self.lock, no matter what
 
-        print("     Imu Right \t\t\t\t" + str(self.imu_right_state))
+        #print("     Imu Right \t\t\t\t" + str(self.imu_right_state))
 
 
 if __name__ == '__main__':
@@ -705,7 +719,6 @@ if __name__ == '__main__':
             # Update dt at each iteration
             start = rospy.get_time()
             dt = start - end
-            hDt.append(dt)
 
             print("KALMAN - " + str(start) + "  "  +  str(dt))
             # Prediction step

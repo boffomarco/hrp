@@ -11,8 +11,6 @@ from Phidget22.PhidgetException import *
 from Phidget22.Phidget import *
 from Phidget22.Devices.GPS import *
 
-import pymap3d as pm
-
 
 # Start GPS node
 rospy.init_node("gps_pub", anonymous=True,  log_level=rospy.DEBUG)
@@ -48,26 +46,26 @@ def gps_pub_node():
 	# Fetch the parameters
 	device_serial_number = rospy.get_param('~device_serial_number')
 
-	#Create Phidget channels
+	# Create Phidget channels
 	gps = GPS()
 
-	#Set addressing parameters to specify which channel to open
+	# Set addressing parameters to specify which channel to open
 	gps.setDeviceSerialNumber(device_serial_number)
 
-	#Assign any event handlers you need before calling open so that no events are missed.
+	# Assign any event handlers you need before calling open so that no events are missed.
 	gps.setOnPositionChangeHandler(onPositionChange)
 	gps.setOnHeadingChangeHandler(onHeadingChange)
 
 	gps.setOnErrorHandler(onError)
 
-	#Open your Phidgets and wait for attachment
+	# Open your Phidgets and wait for attachment
 	gps.open()
 
 	print("Initialised GPS " + str(device_serial_number))
 
 	rospy.spin()
 
-	#Close your Phidgets once the program is done.
+	# Close your Phidgets once the program is done.
 	gps.close()
 
 

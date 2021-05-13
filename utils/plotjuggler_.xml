@@ -1,0 +1,141 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root version="2.3.8">
+ <tabbed_widget parent="main_window" name="Main Window">
+  <Tab containers="1" tab_name="tab2">
+   <Container>
+    <DockSplitter count="1" sizes="1" orientation="-">
+     <DockSplitter count="2" sizes="0.5;0.5" orientation="|">
+      <DockArea name="...">
+       <plot mode="XYPlot" style="Lines">
+        <range right="0.069632" left="-0.069632" bottom="-0.100000" top="0.100000"/>
+        <limitY/>
+        <curve color="#d62728" curve_x="/odom/pose/position/x" curve_y="/odom/pose/position/y" name="/odom/pose/position/[x;y]"/>
+        <curve color="#d62728" curve_x="/Odom_Ground/pose/position/x" curve_y="/Odom_Ground/pose/position/y" name="/Odom_Ground/pose/position/[x;y]"/>
+        <curve color="#9467bd" curve_x="/Odom_Control/pose/position/x" curve_y="/Odom_Control/pose/position/y" name="/Odom_Control/pose/position/[x;y]"/>
+        <curve color="#d62728" curve_x="/Odom_Full_EKF/pose/position/x" curve_y="/Odom_Full_EKF/pose/position/y" name="/Odom_Full_EKF/pose/position/[x;y]"/>
+        <curve color="#9467bd" curve_x="/Odom_GPS/pose/position/x" curve_y="/Odom_GPS/pose/position/y" name="/Odom_GPS/pose/position/[x;y]"/>
+        <curve color="#bcbd22" curve_x="/Odom_gps_left/pose/position/x" curve_y="/Odom_gps_left/pose/position/y" name="/Odom_gps_left/pose/position/[x;y]"/>
+       </plot>
+      </DockArea>
+      <DockSplitter count="4" sizes="0.249718;0.250847;0.249718;0.249718" orientation="-">
+       <DockArea name="...">
+        <plot mode="TimeSeries" style="Lines">
+         <range right="0.000000" left="0.000000" bottom="-0.100000" top="0.100000"/>
+         <limitY/>
+         <curve color="#ff7f0e" name="/odom/pose/orientation/yaw_deg"/>
+         <curve color="#1ac938" name="/Odom_Ground/pose/orientation/yaw_deg"/>
+         <curve color="#ff7f0e" name="/Odom_Full_EKF/pose/orientation/yaw_deg"/>
+         <curve color="#f14cc1" name="/Odom_Control/pose/orientation/yaw_deg"/>
+         <curve color="#17becf" name="/Odom_GPS/pose/orientation/yaw_deg"/>
+         <curve color="#1f77b4" name="/Odom_gps_left/pose/orientation/yaw_deg"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot mode="TimeSeries" style="Lines">
+         <range right="0.000000" left="0.000000" bottom="-0.100000" top="0.100000"/>
+         <limitY/>
+         <curve color="#f14cc1" name="/odom/twist/linear/x"/>
+         <curve color="#ff7f0e" name="/cmd_vel/linear/x"/>
+         <curve color="#bcbd22" name="/Odom_Control/twist/linear/x"/>
+         <curve color="#ff7f0e" name="/Odom_Full_EKF/twist/linear/x"/>
+         <curve color="#d62728" name="/Odom_Ground/twist/linear/x"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot mode="TimeSeries" style="Lines">
+         <range right="5.183358" left="0.000000" bottom="-0.007094" top="0.009066"/>
+         <limitY/>
+         <curve color="#ff7f0e" name="/odom/twist/angular/z"/>
+         <curve color="#1ac938" name="/cmd_vel/angular/z"/>
+         <curve color="#f14cc1" name="/imu_left/imu/data_raw/angular_velocity/z">
+          <transform alias="/imu_left/imu/data_raw/angular_velocity/z[Scale/Offset]" name="Scale/Offset">
+           <options time_offset="0" value_offset="0" value_scale="-1.0"/>
+          </transform>
+         </curve>
+         <curve color="#17becf" name="/imu_right/imu/data_raw/angular_velocity/z">
+          <transform alias="/imu_right/imu/data_raw/angular_velocity/z[Scale/Offset]" name="Scale/Offset">
+           <options time_offset="0" value_offset="0" value_scale="-1.0"/>
+          </transform>
+         </curve>
+         <curve color="#17becf" name="/Odom_Control/twist/angular/z"/>
+         <curve color="#1ac938" name="/Odom_Full_EKF/twist/angular/z"/>
+         <curve color="#ff7f0e" name="/Odom_Ground/twist/angular/z"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot mode="TimeSeries" style="Lines">
+         <range right="5.183358" left="0.036566" bottom="0.261453" top="0.327044"/>
+         <limitY/>
+         <curve color="#bcbd22" name="/imu_right/imu/data_raw/linear_acceleration/y"/>
+         <curve color="#1f77b4" name="/imu_left/imu/data_raw/linear_acceleration/y"/>
+         <curve color="#1f77b4" name="/Odom_Control/twist/linear/z"/>
+         <curve color="#f14cc1" name="/Odom_Full_EKF/twist/linear/z"/>
+         <curve color="#f14cc1" name="/Odom_Ground/twist/linear/z"/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab containers="1" tab_name="tab2">
+   <Container>
+    <DockSplitter count="1" sizes="1" orientation="-">
+     <DockArea name="...">
+      <plot mode="TimeSeries" style="Lines">
+       <range right="3.389266" left="0.036566" bottom="-0.100000" top="0.100000"/>
+       <limitY/>
+       <curve color="#1ac938" name="/Odom_GPS/pose/covariance[0,0]"/>
+      </plot>
+     </DockArea>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <currentTabIndex index="0"/>
+ </tabbed_widget>
+ <use_relative_time_offset enabled="1"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <!-- - - - - - - - - - - - - - - -->
+ <Plugins>
+  <plugin ID="DataLoad CSV">
+   <default time_axis=""/>
+  </plugin>
+  <plugin ID="DataLoad ROS bags">
+   <use_header_stamp value="true"/>
+   <use_renaming_rules value="true"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="10"/>
+  </plugin>
+  <plugin ID="DataLoad ULog"/>
+  <plugin ID="MQTT Subscriber"/>
+  <plugin ID="ROS Topic Subscriber">
+   <use_header_stamp value="true"/>
+   <use_renaming_rules value="true"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="100"/>
+  </plugin>
+  <plugin ID="UDP Server"/>
+  <plugin ID="WebSocket Server"/>
+  <plugin ID="ZMQ Subscriber"/>
+  <plugin status="idle" ID="ROS /rosout Visualization"/>
+  <plugin status="idle" ID="ROS Topic Re-Publisher"/>
+ </Plugins>
+ <!-- - - - - - - - - - - - - - - -->
+ <previouslyLoaded_Datafiles>
+  <fileInfo filename="/home/marco/Videos/2021-04-01-16-33-27.bag" prefix="">
+   <selected_datasources value="/GPSfix;/cmd_vel;/imu_left/imu/data_raw;/imu_left/imu/mag;/imu_right/imu/data_raw;/imu_right/imu/mag;/odom;/tf;/tf_static;/wheel_encoder"/>
+   <plugin ID="DataLoad ROS bags">
+    <use_header_stamp value="true"/>
+    <use_renaming_rules value="true"/>
+    <discard_large_arrays value="true"/>
+    <max_array_size value="10"/>
+   </plugin>
+  </fileInfo>
+ </previouslyLoaded_Datafiles>
+ <previouslyLoaded_Streamer name="ROS Topic Subscriber"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <customMathEquations/>
+ <snippets/>
+ <!-- - - - - - - - - - - - - - - -->
+</root>
+

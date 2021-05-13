@@ -1,5 +1,6 @@
 <launch>
-  <node pkg="robot_localization" type="ekf_localization_node" name="BatchEKF" clear_params="true">
-    <rosparam command="load" file="$(find am_driver_safe)/params/BatchEKF.yaml" />
+  <node name="BatchEKF_lastRPi"
+        pkg="am_driver_safe"
+        type="BatchEKF_lastRPi.py">
   </node>
 </launch>

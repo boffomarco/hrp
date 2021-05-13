@@ -11,9 +11,9 @@
 
 namespace am_sensors_imu{
 
-class IMUProcess 
+class IMUProcess
 {
-  public:	
+  public:
 	IMUProcess(const ros::NodeHandle& nh,
              const ros::NodeHandle& nh_private);
 	virtual ~IMUProcess();
@@ -25,7 +25,7 @@ class IMUProcess
 
   ros::Publisher imu_pub_;
   ros::Subscriber imu_sub_;
-  ros::Subscriber cmd_vel_sub_; 
+  ros::Subscriber cmd_vel_sub_;
   ros::Publisher imu_pub_rpy_;
 
   std::string topic_name_;
