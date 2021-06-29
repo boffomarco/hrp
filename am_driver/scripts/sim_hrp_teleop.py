@@ -207,11 +207,16 @@ class HRP_Teleop(object):
 
       r = rospy.Rate(self.update_rate) # Hz
       while not rospy.is_shutdown():
+        print("Get")
         ch = self.get_key()
         self.process_key(ch)
+        print("Processed")
         self.update()
+        print("Update")
         self.showstatuslines()
-        r.sleep()
+        print("Show")
+        #r.sleep()
+        print("Sleep")
     except rospy.exceptions.ROSInterruptException:
       pass
     finally:

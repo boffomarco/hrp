@@ -1,0 +1,139 @@
+<launch>
+
+  <!-- Select which sensors are to be used -->
+  <arg name="simulateWheelOdometry"     default="True" />
+  <arg name="simulateVisualOdometry"    default="True" />
+  <arg name="simulateGPS"               default="True" />
+  <arg name="simulateLeftGPS"           default="True" />
+  <arg name="simulateRightGPS"          default="True" />
+  <arg name="simulateLeftIMU"           default="True" />
+  <arg name="simulateRightIMU"          default="True" />
+
+    <group if="$(arg simulateWheelOdometry)" ns="wheel_odometry">
+        <node name="wheel_odometry"
+                pkg="am_sensors"
+                type="simulateSensor.py" output="screen">
+            <param name="pubTopic"      value="odom" />
+            <param name="pubFrequency"  value="200"/> <!-- Unit: in second or meter -->
+
+            <param name="index_0" value="3" />
+            <param name="index_1" value="4" />
+            <param name="index_2" value="5" />
+
+            <param name="std_0" value="0.1" />
+            <param name="std_1" value="0.05" />
+            <param name="std_2" value="0.05" />
+
+        </node>
+    </group>
+
+    <group if="$(arg simulateVisualOdometry)" ns="visual_odometry">
+        <node name="visual_odometry"
+                pkg="am_sensors"
+                type="simulateSensor.py" output="screen">
+            <param name="pubTopic"      value="odom" />
+            <param name="pubFrequency"  value="5"/> <!-- Unit: in second or meter -->
+
+            <param name="index_0" value="3" />
+            <param name="index_1" value="4" />
+            <param name="index_2" value="5" />
+
+            <param name="std_0" value="0.05" />
+            <param name="std_1" value="0.05" />
+            <param name="std_2" value="0.05" />
+
+        </node>
+    </group>
+
+    <group if="$(arg simulateGPS)" ns="automower_gps">
+        <node name="automower_gps"
+                pkg="am_sensors"
+                type="simulateSensor.py" output="screen">
+            <param name="pubTopic"      value="GPSfix" />
+            <param name="pubFrequency"  value="1"/> <!-- Unit: in second or meter -->
+
+            <param name="index_0" value="0" />
+            <param name="index_1" value="1" />
+            <param name="index_2" value="2" />
+
+            <param name="std_0" value="1" />
+            <param name="std_1" value="1" />
+            <param name="std_2" value="0.1" />
+
+        </node>
+    </group>
+
+    <group if="$(arg simulateLeftGPS)" ns="gps_left">
+        <node name="gps_left"
+                pkg="am_sensors"
+                type="simulateSensor.py" output="screen">
+            <param name="pubTopic"      value="NMEA_fix" />
+            <param name="pubFrequency"  value="1"/> <!-- Unit: in second or meter -->
+
+            <param name="index_0" value="0" />
+            <param name="index_1" value="1" />
+            <param name="index_2" value="2" />
+
+            <param name="std_0" value="3" />
+            <param name="std_1" value="3" />
+            <param name="std_2" value="0.3" />
+
+        </node>
+    </group>
+
+    <group if="$(arg simulateRightGPS)" ns="gps_right">
+        <node name="gps_right"
+                pkg="am_sensors"
+                type="simulateSensor.py" output="screen">
+            <param name="pubTopic"      value="NMEA_fix" />
+            <param name="pubFrequency"  value="1"/> <!-- Unit: in second or meter -->
+
+            <param name="index_0" value="0" />
+            <param name="index_1" value="1" />
+            <param name="index_2" value="2" />
+
+            <param name="std_0" value="3" />
+            <param name="std_1" value="3" />
+            <param name="std_2" value="0.3" />
+
+        </node>
+    </group>
+
+    <group if="$(arg simulateLeftIMU)" ns="imu_left">
+        <node name="imu_left"
+                pkg="am_sensors"
+                type="simulateSensor.py" output="screen">
+            <param name="pubTopic"      value="data_raw" />
+            <param name="pubFrequency"  value="250"/> <!-- Unit: in second or meter -->
+
+            <param name="index_0" value="3" />
+            <param name="index_1" value="4" />
+            <param name="index_2" value="5" />
+
+            <param name="std_0" value="0.2" />
+            <param name="std_1" value="0.05" />
+            <param name="std_2" value="2.5" />
+
+        </node>
+    </group>
+
+    <group if="$(arg simulateRightIMU)" ns="imu_right">
+        <node name="imu_right"
+                pkg="am_sensors"
+                type="simulateSensor.py" output="screen">
+            <param name="pubTopic"      value="data_raw" />
+            <param name="pubFrequency"  value="10"/> <!-- Unit: in second or meter -->
+
+            <param name="index_0" value="3" />
+            <param name="index_1" value="4" />
+            <param name="index_2" value="5" />
+
+            <param name="std_0" value="0.2" />
+            <param name="std_1" value="0.05" />
+            <param name="std_2" value="2.5" />
+
+        </node>
+    </group>
+
+
+</launch>

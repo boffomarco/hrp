@@ -36,6 +36,7 @@ void CCONV positionChangeHandler(PhidgetGPSHandle ch, void *ctx, double latitude
         fix->position_covariance[2] = NMEAData.GSA.fixType;
         fix->position_covariance[3] = NMEAData.GSA.posnDilution;
         //fix->position_covariance[4] = NMEAData.GSA.satUsed;
+        fix->position_covariance[4] = NMEAData.GGA.fixQuality;
         fix->position_covariance[5] = NMEAData.GSA.vertDilution;
         fix->position_covariance[6] = NMEAData.GGA.numSatellites;
         fix->position_covariance[7] = NMEAData.GGA.horizontalDilution;

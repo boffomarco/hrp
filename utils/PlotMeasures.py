@@ -100,7 +100,7 @@ def hist_GPS(bag, topic, seconds):
     df = pd.DataFrame({'Longitude': lon, 'Latitude': lat})
 
     # Plot jointGrid
-    g = sns.JointGrid(data=df, x='Longitude', y='Latitude')# \\ $\mu='+ str(mu_lon)+'$, $\sigma='+ str(sigma_lon)+'$', y='Latitude (m) \\ $\mu='+ str(mu_lat)+'$, $\sigma='+ str(sigma_lat)+'$')
+    g = sns.JointGrid(data=df, x='Longitude', y='Latitude', marginal_ticks=True)# \\ $\mu='+ str(mu_lon)+'$, $\sigma='+ str(sigma_lon)+'$', y='Latitude (m) \\ $\mu='+ str(mu_lat)+'$, $\sigma='+ str(sigma_lat)+'$')
     g.plot_joint(sns.kdeplot,fill=True, thresh=0.1, levels=10)
     g.plot_joint(sns.rugplot)
     g.plot_joint(sns.scatterplot)
@@ -110,9 +110,10 @@ def hist_GPS(bag, topic, seconds):
     #g.set_axis_labels(x = 'Longitude (m) \\ $\mu='+ str(mu_lon)+'$, $\sigma='+ str(sigma_lon)+'$', y = 'Latitude (m) \\ $\mu='+ str(mu_lat)+'$, $\sigma='+ str(sigma_lat)+'$' , fontsize=15)
     g.ax_joint.set_xlabel(r'~~~~~~~~~~~~~~~~~~~Longitude (m) \\\\ $\mu='+ str(mu_lon)+r'$, $\sigma='+ str(sigma_lon)+r'$') #Assign x label
     g.ax_joint.set_ylabel(r'$\mu='+ str(mu_lat)+r'$, $\sigma='+ str(sigma_lat)+r'$ \\\\ ~~~~~~~~~~~~~~~~~~~Latitude (m)') #Assign y label
+    g.fig.suptitle(str(r"Original "+str(topic)).replace("_","-"))
     plt.tight_layout()
 
-    plt.savefig('Original-Fig-' + topic[1:7] + '.pgf', dpi=300)
+    plt.savefig('/home/marco/Videos/Original-Fig-' + topic[1:7] + '.pgf', dpi=300)
 
 
 
@@ -198,7 +199,7 @@ def hist_GPS(bag, topic, seconds):
     df = pd.DataFrame({'Longitude': lon, 'Latitude': lat})
 
     # Plot jointGrid
-    g = sns.JointGrid(data=df, x='Longitude', y='Latitude')# \\ $\mu='+ str(mu_lon)+'$, $\sigma='+ str(sigma_lon)+'$', y='Latitude (m) \\ $\mu='+ str(mu_lat)+'$, $\sigma='+ str(sigma_lat)+'$')
+    g = sns.JointGrid(data=df, x='Longitude', y='Latitude', marginal_ticks=True)# \\ $\mu='+ str(mu_lon)+'$, $\sigma='+ str(sigma_lon)+'$', y='Latitude (m) \\ $\mu='+ str(mu_lat)+'$, $\sigma='+ str(sigma_lat)+'$')
     g.plot_joint(sns.kdeplot,fill=True, thresh=0.1, levels=10)
     g.plot_joint(sns.rugplot)
     g.plot_joint(sns.scatterplot)
@@ -208,9 +209,10 @@ def hist_GPS(bag, topic, seconds):
     #g.set_axis_labels(x = 'Longitude (m) \\ $\mu='+ str(mu_lon)+'$, $\sigma='+ str(sigma_lon)+'$', y = 'Latitude (m) \\ $\mu='+ str(mu_lat)+'$, $\sigma='+ str(sigma_lat)+'$' , fontsize=15)
     g.ax_joint.set_xlabel(r'~~~~~~~~~~~~~~~~Longitude (m) \\\\ $\mu='+ str(mu_lon)+r'$, $\sigma='+ str(sigma_lon)+r'$') #Assign x label
     g.ax_joint.set_ylabel(r'$\mu='+ str(mu_lat)+r'$, $\sigma='+ str(sigma_lat)+r'$ \\\\ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~Latitude (m)') #Assign y label
+    g.fig.suptitle(str(r"Transformed "+str(topic)).replace("_","-"))
     plt.tight_layout()
 
-    plt.savefig('Transformed-Fig-' + topic[1:7] + '.pgf', dpi=300)
+    plt.savefig('/home/marco/Videos/Transformed-Fig-' + topic[1:7] + '.pgf', dpi=300)
 
     plt.show()
     plt.pause(1)
@@ -365,6 +367,157 @@ def hist_IMU(bag, topic, seconds):
     plt.pause(1)
 
 
+
+def plot_IMU(bag, topic, initial_seconds = 0, final_seconds = 0):
+
+    # Define list of measures to plot
+    yAcc = list()
+    yawVel = list()
+    time_measures = list()
+    difftime = list()
+    difft = list()
+    # Initialise Time difference values
+    timestamp = 0
+    tstamp = 0
+    time_measure_i = 0 # Initial time
+    time_i = 0 # Initial time
+    time_f = 0 # Final time
+    # DataFrame
+    dataFrame = []
+    # Iterate over topics of the bag
+    for topic, msg, t in bag.read_messages(topics=[topic]):
+        if( time_i == 0):
+            time_i = t
+            time_measure_i = float(str(msg.header.stamp))
+
+        time_t = ( float( str( time_f ) ) - float( str( time_i ) ) ) / 1e9
+
+        if(time_t > float(initial_seconds) and time_t < float(final_seconds)):  # Initial seconds of stillness
+
+            time_measure = (float(str(msg.header.stamp)) - time_measure_i) / 1e9
+            time_measures.append(time_measure)
+
+            yAcc.append(msg.linear_acceleration.y)
+            yawVel.append(msg.angular_velocity.z)
+
+            dataFrame.append((time_measure, msg.linear_acceleration.y, "Linear Accelleration [m/sec**2]", 0))
+            dataFrame.append((time_measure, msg.angular_velocity.z, "Angular Velocity [rad/sec]", 1))
+
+            t = float(str(t))
+            difft.append((t - tstamp)/1e9)
+            tstamp = t
+
+            stamp = float(str(msg.header.stamp))
+            difftime.append((stamp - timestamp)/1e9)
+            timestamp = stamp
+
+        time_f = t
+
+    difft = difft[1:]
+    difftime = difftime[1:]
+
+
+    mu_yAcc = round(np.mean(yAcc),5)
+    sigma_yAcc = round(np.std(yAcc),5)
+
+
+    mu_yawVel = round(np.mean(yawVel),5)
+    sigma_yawVel = round(np.std(yawVel),5)
+
+
+    IMU_DF = pd.DataFrame(dataFrame, columns=('Time', 'Measure', 'Type', "Marker"))
+
+    # Plot jointGrid
+
+    g = sns.JointGrid(marginal_ticks=True)
+    #g = sns.JointGrid(data=IMU_DF, x="Time", y="Measure", hue="Marker")
+    x, y, type, marker = IMU_DF["Time"], IMU_DF["Measure"], IMU_DF["Type"], IMU_DF["Marker"]
+    sns.scatterplot(x=x, y=y, s=10, linewidth=.5, ax=g.ax_joint, hue=type, style=type)
+    sns.histplot(x=x, fill=False, linewidth=1, ax=g.ax_marg_x, hue=type)
+    sns.kdeplot(y=y, linewidth=1, ax=g.ax_marg_y, hue=type)
+    g.ax_joint.set_xlabel(r'Time [s]') #Assign x label
+    g.ax_joint.set_ylabel(r'$\\mu_{a} ='+ str(mu_yAcc)+r'$ - $\sigma_a='+ str(sigma_yAcc)+r'$ -+- $\\mu_{\\omega} ='+ str(mu_yawVel)+r'$ - $\sigma_{\\omega}='+ str(sigma_yawVel)+r'$') #Assign y label
+    g.fig.suptitle(str(r""+str(topic)).replace("_","-"))
+    plt.show()
+
+    plt.pause(1)
+
+
+
+def plot_Odometry(bag, topic, initial_seconds = 0, final_seconds = 0):
+
+    # Define list of measures to plot
+    xVel = list()
+    yawVel = list()
+    time_measures = list()
+    difftime = list()
+    difft = list()
+    # Initialise Time difference values
+    timestamp = 0
+    tstamp = 0
+    time_measure_i = 0 # Initial time
+    time_i = 0 # Initial time
+    time_f = 0 # Final time
+    # DataFrame
+    dataFrame = []
+    # Iterate over topics of the bag
+    for topic, msg, t in bag.read_messages(topics=[topic]):
+        if( time_i == 0):
+            time_i = t
+            time_measure_i = float(str(msg.header.stamp))
+
+        time_t = ( float( str( time_f ) ) - float( str( time_i ) ) ) / 1e9
+
+        if(time_t > float(initial_seconds) and time_t < float(final_seconds)):  # Initial seconds of stillness
+
+            time_measure = (float(str(msg.header.stamp)) - time_measure_i) / 1e9
+            time_measures.append(time_measure)
+
+            xVel.append(msg.twist.twist.linear.x)
+            yawVel.append(msg.twist.twist.angular.z)
+
+            dataFrame.append((time_measure, msg.twist.twist.linear.x, "Linear Velocity [m/sec]", 0))
+            dataFrame.append((time_measure, msg.twist.twist.angular.z, "Angular Velocity [rad/sec]", 1))
+
+            t = float(str(t))
+            difft.append((t - tstamp)/1e9)
+            tstamp = t
+
+            stamp = float(str(msg.header.stamp))
+            difftime.append((stamp - timestamp)/1e9)
+            timestamp = stamp
+
+        time_f = t
+
+    difft = difft[1:]
+    difftime = difftime[1:]
+
+
+    mu_xVel = round(np.mean(xVel),5)
+    sigma_xVel = round(np.std(xVel),5)
+
+
+    mu_yawVel = round(np.mean(yawVel),5)
+    sigma_yawVel = round(np.std(yawVel),5)
+
+
+
+    IMU_DF = pd.DataFrame(dataFrame, columns=('Time', 'Measure', 'Type', "Marker"))
+
+    # Plot jointGrid
+
+    g = sns.JointGrid(marginal_ticks=True)
+    x, y, type, marker = IMU_DF["Time"], IMU_DF["Measure"], IMU_DF["Type"], IMU_DF["Marker"]
+    sns.scatterplot(x=x, y=y, s=10, linewidth=.5, ax=g.ax_joint, hue=type, style=type)
+    sns.histplot(x=x, fill=False, linewidth=1, ax=g.ax_marg_x, hue=type)
+    sns.kdeplot(y=y, linewidth=1, ax=g.ax_marg_y, hue=type)
+    g.ax_joint.set_xlabel(r'Time [s]') #Assign x label
+    g.ax_joint.set_ylabel(r'$\\mu_{v} ='+ str(mu_xVel)+r'$ - $\sigma_v='+ str(sigma_xVel)+r'$ -+- $\\mu_{\\omega} ='+ str(mu_yawVel)+r'$ - $\sigma_{\\omega}='+ str(sigma_yawVel)+r'$') #Assign y label
+    g.fig.suptitle(str(r""+str(topic)).replace("_","-"))
+    plt.show()
+
+    plt.pause(1)
+
 if __name__ == "__main__":
 
     mpl.rcParams['font.family'] = 'Times New Roman'
@@ -382,6 +535,8 @@ if __name__ == "__main__":
     sns.set(font_scale=1.5, rc={'text.usetex' : True})
     sns.set(font="Times New Roman")
     mpl.rcParams['font.family'] = 'Times New Roman'
+
+    sns.set(style='whitegrid')
 
 
 
@@ -411,7 +566,7 @@ if __name__ == "__main__":
 
     bag = rosbag.Bag(path)
 
-    """
+    """ WORK on the GROUND TRUTH generation
     # Check command messages
     # Define list of measures to plot
     xVel = list()
@@ -471,9 +626,24 @@ if __name__ == "__main__":
     #hist_GPS(bag, '/gps_left/NMEA_fix', seconds)
     #hist_GPS(bag, '/gps_right/NMEA_fix', seconds)
 
-    #hist_IMU(bag, '/imu_left/imu/data_raw', seconds)
-    hist_IMU(bag, '/imu_right/imu/data_raw', seconds)
 
+    #hist_IMU(bag, '/imu_left/imu/data_raw', seconds)
+    #hist_IMU(bag, '/imu_right/imu/data_raw', seconds)
+
+    plot_IMU(bag, '/imu_left/imu/data_raw', 0, seconds)
+    plot_IMU(bag, '/imu_right/imu/data_raw', 0, seconds)
+
+
+    plot_IMU(bag, '/imu_left/imu/data_raw', 1120, 1180)
+    plot_IMU(bag, '/imu_right/imu/data_raw', 1120, 1180)
+
+
+
+    plot_Odometry(bag, '/odom', 0, seconds)
+    #plot_Odometry(bag, '/rtabmap/odom', 0, 6)
+
+    plot_Odometry(bag, '/odom', 1120, 1180)
+    #plot_Odometry(bag, '/rtabmap/odom', 1120-156, 1180-156)
 
     # Close the bag
     bag.close()

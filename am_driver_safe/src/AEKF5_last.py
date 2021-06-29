@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
 
-"""
-[TODO]
- - Calibration of IMU wrt their position
- -
-"""
-
 # From https://github.com/AtsushiSakai/PythonRobotics/blob/master/Localization/extended_kalman_filter/extended_kalman_filter.py
 
 import math
@@ -69,22 +63,20 @@ class AEKF():
         self.yaw_t = 0.0
         self.x_dot_t = 0.0
         self.yaw_dot_t = 0.0
-        self.x_dot2_t = 0.0
 
         # Frequency of the Kalman filter
         self.rate = 250
-        # Steps to slowly account the control input
-        self.steps = 250
 
         # State-Vector
         self.X_t = np.array([self.x_t,      self.y_t,      self.yaw_t,
-                             self.x_dot_t,  self.yaw_dot_t, self.x_dot2_t])
+                             self.x_dot_t,  self.yaw_dot_t])
         self.X_control = np.array([self.x_t,      self.y_t,      self.yaw_t,
-                                   self.x_dot_t,  self.yaw_dot_t, self.x_dot2_t])
+                                   self.x_dot_t,  self.yaw_dot_t])
         # Filter Covariance Matrix
-        self.P_t = np.eye(6)*1e-5
+        #self.P_t =  np.diag(np.array([ 0.2, 0.2, 0.01, 0.5, 0.001]))
+        self.P_t =  np.eye(5)*1e-3
         # Filter Innovation Matrix
-        self.K = np.diag(np.zeros(6))
+        self.K = np.diag(np.zeros(5))
 
 
         # Initialise Measurements Vector
@@ -92,63 +84,53 @@ class AEKF():
         # Initialise Measurements Covariance Matrix
         self.R = np.array([])
         # Initialise Measurements Matrix
-        self.H = np.zeros((6,0))
+        self.H = np.zeros((5,0))
         # Initialise Measurements Jacobian Matrix
-        self.J_H = np.zeros((6,0))
+        self.J_H = np.zeros((5,0))
 
         print("Initialised AEKF")
 
-
-        # Define set of topics to publish
-        if(self.test and self.ros):
-            self.odom_control_pub = rospy.Publisher('Odom_Control', Odometry, queue_size=20)
-
-            #self.odom_imu_l_pub = rospy.Publisher('Odom_IMU_L', Odometry, queue_size=20)
-
-            #self.odom_imu_r_pub = rospy.Publisher('Odom_IMU_R', Odometry, queue_size=20)
-
-            self.odom_gps_pub = rospy.Publisher('Odom_GPS', Odometry, queue_size=20)
-            self.odom_gps_left_pub = rospy.Publisher('Odom_gps_left', Odometry, queue_size=20)
-            self.odom_gps_right_pub = rospy.Publisher('Odom_gps_right', Odometry, queue_size=20)
-
-            self.odom_aekf_pub = rospy.Publisher('Odom_AEKF', Odometry, queue_size=20)
-
         # Define set of topics to subscribe to
         rospy.Subscriber('Odom_Ground', Odometry, self.GroundTruth)
-        self.ground_state = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        self.ground_state = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
 
-        rospy.Subscriber('cmd_vel', Twist, self.Control)
         self.control_fusion = True
+        rospy.Subscriber('cmd_vel', Twist, self.Control)
         self.control_measure = False
         self.control_t = -1
         self.control_state = np.array([0.0, 0.0])
         rospy.Subscriber('current_status', CurrentStatus, self.CurrentStatus)
         self.current_status = 1
 
-        rospy.Subscriber('odom', Odometry, self.WheelOdometer)
-        self.wheel_fusion = False
+        self.wheel_fusion = True
+        if(self.wheel_fusion):
+            rospy.Subscriber('odom', Odometry, self.WheelOdometer)
         self.wheel_odometer_measure = False
         self.wheel_odometer_state = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         self.wheel_odometer_bias = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        self.wheel_odometer_var = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        #self.wheel_odometer_var = np.array([0.033, 0.12]) # Measured from gravel park test
+        self.wheel_odometer_var = np.array([0.1, 0.05]) # Estimated
 
-        rospy.Subscriber('/rtabmap/odom', Odometry, self.VisualOdometer)
         self.visual_fusion = True
+        if(self.visual_fusion):
+            rospy.Subscriber('/rtabmap/odom', Odometry, self.VisualOdometer)
         self.visual_odometer_measure = False
         self.visual_odometer_state = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         self.visual_odometer_bias = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         self.visual_odometer_var = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
         self.gps_th = - 0.97
-        rospy.Subscriber('GPSfix', NavSatFix, self.GPS)
         self.gps_fusion = True
+        if(self.gps_fusion):
+            rospy.Subscriber('GPSfix', NavSatFix, self.GPS)
         self.gps_measure = False
         self.gps_state = np.array([0.0, 0.0, 0.0, 0.0])
         self.gps_bias = np.array([0.0, 0.0, 0.0, 0.0])
         self.gps_var = np.array([0.0, 0.0, 0.0, 0.0])
 
-        rospy.Subscriber('gps_left/NMEA_fix', NavSatFix, self.gps_left)
         self.gps_left_fusion = False
+        if(self.gps_left_fusion):
+            rospy.Subscriber('gps_left/NMEA_fix', NavSatFix, self.gps_left)
         self.gps_left_measure = 0
         self.gps_left_hz = 5
         self.gps_left_state = np.array([0.0, 0.0, 0.0, 0.0])
@@ -156,8 +138,9 @@ class AEKF():
         self.gps_left_var = np.array([0.0, 0.0, 0.0, 0.0])
         self.gps_left_mounted = np.array([0.21, 0.182, 0.37])
 
-        rospy.Subscriber('gps_right/NMEA_fix', NavSatFix, self.gps_right)
         self.gps_right_fusion = False
+        if(self.gps_right_fusion):
+            rospy.Subscriber('gps_right/NMEA_fix', NavSatFix, self.gps_right)
         self.gps_right_measure = 0
         self.gps_right_hz = 5
         self.gps_right_state = np.array([0.0, 0.0, 0.0, 0.0])
@@ -165,84 +148,129 @@ class AEKF():
         self.gps_right_var = np.array([0.0, 0.0, 0.0, 0.0])
         self.gps_right_mounted = np.array([0.21, -0.182, 0.37])
 
-        rospy.Subscriber('imu_left/imu/data_raw', Imu, self.ImuLeft)
         self.imu_left_fusion = True
+        if(self.imu_left_fusion):
+            rospy.Subscriber('imu_left/imu/data_raw', Imu, self.ImuLeft)
         self.imu_left_measure = False
         self.imu_left_t = now
-        self.imu_left_state = np.array([0.0, 0.0, 0.0])
+        self.imu_left_state = np.array([0.0, 0.0, 9.81])
         self.imu_left_bias = np.array([0.0, 0.0, 0.0])
-        self.imu_left_var = np.array([np.deg2rad(10), 0.05, 2.5])
+        #self.imu_left_var = np.array([np.deg2rad(10), 0.083, 2.23])  # Measured from gravel park test
+        self.imu_left_var = np.array([np.deg2rad(10), 0.05, 2.5]) # Estimated
         self.imu_left_mounted = np.array([0.0, 0.16, 0.37])
 
-        rospy.Subscriber('imu_right/imu/data_raw', Imu, self.ImuRight)
         self.imu_right_fusion = True
+        if(self.imu_right_fusion):
+            rospy.Subscriber('imu_right/imu/data_raw', Imu, self.ImuRight)
         self.imu_right_measure = False
         self.imu_right_t = now
-        self.imu_right_state = np.array([0.0, 0.0, 0.0])
+        self.imu_right_state = np.array([0.0, 0.0, 9.81])
         self.imu_right_bias = np.array([0.0, 0.0, 0.0])
-        self.imu_right_var = np.array([np.deg2rad(10), 0.05, 2.5])
+        #self.imu_right_var = np.array([np.deg2rad(10), 0.086, 2.36])  # Measured from gravel park test
+        self.imu_right_var = np.array([np.deg2rad(10), 0.05, 2.5])  # Estimated
         self.imu_right_mounted = np.array([0.0, -0.16, 0.37])
+
+        # Define set of topics to publish
+        if(self.test and self.ros):
+
+            if(self.control_fusion):
+                self.odom_control_pub = rospy.Publisher('Odom_Control', Odometry, queue_size=20)
+
+            if(self.gps_fusion):
+                self.odom_gps_pub = rospy.Publisher('Odom_GPS', Odometry, queue_size=20)
+
+            if(self.gps_left_fusion):
+                self.odom_gps_left_pub = rospy.Publisher('Odom_gps_left', Odometry, queue_size=20)
+
+            if(self.gps_right_fusion):
+                self.odom_gps_right_pub = rospy.Publisher('Odom_gps_right', Odometry, queue_size=20)
+
+            self.odom_aekf_pub = rospy.Publisher('Odom_AEKF', Odometry, queue_size=20)
+
 
 
     # Prediction step with only the kinematic model
     def Predict(self, dt):
 
         # State-Transition Matrix
-        A_t = np.array([[1.0, 0.0, 0.0, cos(self.X_t[2])*dt, 0.0, cos(self.X_t[2])*(dt**2)/2],
-                        [0.0, 1.0, 0.0, sin(self.X_t[2])*dt, 0.0, sin(self.X_t[2])*(dt**2)/2],
-                        [0.0, 0.0, 1.0, 0.0,  dt, 0.0],
-                        [0.0, 0.0, 0.0, 1.0, 0.0, dt],
-                        [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-                        [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
-        A_control = np.array([[1.0, 0.0, 0.0, cos(self.X_control[2])*dt, 0.0, cos(self.X_control[2])*(dt**2)/2],
-                              [0.0, 1.0, 0.0, sin(self.X_control[2])*dt, 0.0, sin(self.X_control[2])*(dt**2)/2],
-                              [0.0, 0.0, 1.0, 0.0,  dt, 0.0],
-                              [0.0, 0.0, 0.0, 1.0, 0.0, dt],
-                              [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-                              [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
+        A_t = np.array([[1.0, 0.0, 0.0, cos(self.X_t[2])*dt, 0.0],
+                        [0.0, 1.0, 0.0, sin(self.X_t[2])*dt, 0.0],
+                        [0.0, 0.0, 1.0, 0.0,  dt],
+                        [0.0, 0.0, 0.0, 1.0, 0.0],
+                        [0.0, 0.0, 0.0, 0.0, 1.0]])
+        A_control = np.array([[1.0, 0.0, 0.0, cos(self.X_control[2])*dt, 0.0],
+                              [0.0, 1.0, 0.0, sin(self.X_control[2])*dt, 0.0],
+                              [0.0, 0.0, 1.0, 0.0,  dt],
+                              [0.0, 0.0, 0.0, 1.0, 0.0],
+                              [0.0, 0.0, 0.0, 0.0, 1.0]])
 
-        # Noise Variance
-        sigma_noise = 0.001
-
-        # Noise Matrix
-        W = np.array([  random.gauss(mu = 0, sigma = dt**2/6),
-                        random.gauss(mu = 0, sigma = dt**2/6),
-                        random.gauss(mu = 0, sigma = dt**2/6),
-                        random.gauss(mu = 0, sigma = dt/2),
-                        random.gauss(mu = 0, sigma = dt/2),
-                        random.gauss(mu = 0, sigma = dt)])
 
         # Jacobian of Transition Matrix
-        J_A = np.array([[1.0, 0.0, 0.0, -sin(self.X_t[2])*dt, 0.0, -sin(self.X_t[2])*(dt**2)/2],
-                        [0.0, 1.0, 0.0, cos(self.X_t[2])*dt, 0.0, cos(self.X_t[2])*(dt**2)/2],
-                        [0.0, 0.0, 1.0, 0.0,  dt, 0.0],
-                        [0.0, 0.0, 0.0, 1.0, 0.0, dt],
-                        [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-                        [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
-
-        # Prediction Covariance
-        Q = np.array([  [dt**2/2, 0.0, 0.0, 0.0, 0.0, 0.0],
-                        [0.0, dt**2/2, 0.0, 0.0, 0.0, 0.0],
-                        [0.0, 0.0, dt**2/2, 0.0, 0.0, 0.0],
-                        [0.0, 0.0, 0.0, dt, 0.0, 0.0],
-                        [0.0, 0.0, 0.0, 0.0, dt, 0.0],
-                        [0.0, 0.0, 0.0, 0.0, 0.0, dt]])
+        J_A = np.array([[1.0, 0.0, 0.0, -sin(self.X_t[2])*dt, 0.0],
+                        [0.0, 1.0, 0.0,  cos(self.X_t[2])*dt, 0.0],
+                        [0.0, 0.0, 1.0, 0.0,  dt ],
+                        [0.0, 0.0, 0.0, 1.0, 0.0 ],
+                        [0.0, 0.0, 0.0, 0.0, 1.0 ]])
 
         # Check control difference
         u_t = np.array([0.0,
                         0.0,
                         0.0,
                         (self.control_state[0] - self.X_t[3]),
-                        (self.control_state[1] - self.X_t[4]),
-                        - self.X_t[5]]) # To ensure Zero Acceleration behaviour
+                        (self.control_state[1] - self.X_t[4])]).T
         u_control = np.array([0.0,
                              0.0,
                              0.0,
                              (self.control_state[0] - self.X_control[3]),
-                             (self.control_state[1] - self.X_control[4]),
-                             - self.X_control[5]]) # To ensure Zero Acceleration behaviour
+                             (self.control_state[1] - self.X_control[4])])
 
-        B = np.diag(np.array([0,0,0, dt, dt,1]))
+        B = np.array([[ 0.0, 0.0, 0.0, dt, dt]])
+
+        # Compute the sigma based on the accelerometer's measure of the linear acceleration
+        # If the IMUs are not available, use g**2 from gravity acceleration as sigma
+        sigma_A = abs( ( (self.imu_left_state[2]) + (self.imu_right_state[2]) ) / 2 ) # Linear Noise
+        sigma_W = abs( ( (self.imu_left_state[2]) - (self.imu_right_state[2]) ) / 2 ) / 0.16 # Angular Noise
+
+        # Prediction Covariance
+        # Q2
+        #Q = np.array([  [(dt**2)/2, 0.0, 0.0, 0.0, 0.0],
+        #                [0.0, (dt**2)/2, 0.0, 0.0, 0.0],
+        #                [0.0, 0.0, (dt**2)/2, 0.0, 0.0],
+        #                [0.0, 0.0, 0.0, dt, 0.0],
+        #                [0.0, 0.0, 0.0, 0.0, dt]]) * sigma
+
+        # Q2 sin cos
+        #Q = np.array([  [(sin(self.X_t[2])**2)*(dt**2)/2, 0.0, 0.0, 0.0, 0.0],
+        #                [0.0, (cos(self.X_t[2])**2)*(dt**2)/2, 0.0, 0.0, 0.0],
+        #                [0.0, 0.0, dt**2/2, 0.0, 0.0],
+        #                [0.0, 0.0, 0.0, dt, 0.0],
+        #                [0.0, 0.0, 0.0, 0.0, dt]]) * sigma
+
+        # Q2 Complete
+        Q = np.array([  [(sin(self.X_t[2])**2)*(dt**2)/2 * sigma_A,                     -(sin(self.X_t[2])*cos(self.X_t[2]))*(dt**2)/2 * sigma_A,   0.0,                 -(sin(self.X_t[2]))*(dt**2) * sigma_A,     0.0             ],
+                        [-(sin(self.X_t[2])*cos(self.X_t[2]))*(dt**2)/2 * sigma_A,      (cos(self.X_t[2])**2)*(dt**2)/2 * sigma_A,                  0.0,                 (cos(self.X_t[2]))*(dt**2) * sigma_A,      0.0             ],
+                        [0.0,                                                           0.0,                                                        dt**2/2 * sigma_W,   0.0,                                       dt**2 * sigma_W ],
+                        [-(sin(self.X_t[2]))*(dt**2) * sigma_A,                         (cos(self.X_t[2]))*(dt**2) * sigma_A,                       0.0,                 dt * sigma_A,                              0.0             ],
+                        [0.0,                                                           0.0,                                                        dt**2 * sigma_W,     0.0,                                       dt  * sigma_W   ]])
+
+
+        """# Tried with this more Mathematically sound approach -> Worse results
+        B_m = np.array([[0.0, 0.0, 0.0, cos(self.X_t[2])*dt**2/2, 0.0],
+                        [0.0, 0.0, 0.0, sin(self.X_t[2])*dt**2/2, 0.0],
+                        [0.0, 0.0, 0.0, 0.0,  dt**2],
+                        [0.0, 0.0, 0.0, dt, 0.0],
+                        [0.0, 0.0, 0.0, 0.0, dt]])
+        u_m = np.array([(self.control_state[0]*dt - self.X_t[3]*dt),
+                        (self.control_state[0]*dt - self.X_t[3]*dt),
+                        (self.control_state[1]*dt - self.X_t[4]*dt),
+                        (self.control_state[0] - self.X_t[3]),
+                        (self.control_state[1] - self.X_t[4])]).T *dt
+        W_m = np.array([[0.0, 0.0, 0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0, 1.0, 0.0],
+                        [0.0, 0.0, 0.0, 0.0, 1.0]]) * sigma
+        """
 
         # Make sure the execution is safe
         self.lock.acquire()
@@ -250,24 +278,22 @@ class AEKF():
             # Control data
             self.X_control = A_control @ self.X_control + u_control
 
-            # Prediction State
-            if(self.control_fusion):
-                self.X_Pred = A_t @ self.X_t + B @ u_t # ??? + W
+            # Prediction State with fusion when: required and manual mode activated
+            if(self.control_fusion and  ( self.current_status == 1 )):
+                self.X_Pred = A_t @ self.X_t + B @ u_t
+                #self.X_Pred = A_t @ self.X_t + B_m @ u_m # Tried with this more Mathematically sound approach -> Worse results
             else:
-                self.X_Pred = A_t @ self.X_t # ??? + W
+                self.X_Pred = A_t @ self.X_t
 
             # Prediction Covariance Matrix
-            self.P_Pred = J_A @ self.P_t @ J_A.T + Q # ??? + A@Q@A.T ???
-            self.P_Pred = (self.P_Pred + self.P_Pred.T) / 2 # Ensure that it is symmetric
+            self.P_Pred = J_A @ self.P_t @ J_A.T + Q
+            #self.P_Pred = J_A @ self.P_t @ J_A.T + J_A @ W_m @ J_A.T # Tried with this more Mathematically sound approach -> Worse results
 
         finally:
             self.lock.release() # release self.lock, no matter what
 
-        # Reset control accelleration to 0 after updating it
-        self.control_state[2] = 0
-
         if(self.test and self.ros):
-            # Send the Update of the Ground Truth to Ros
+            # Send the Update of the Control to Ros
             header = Header()
             header.stamp = rospy.Time.now() # Note you need to call rospy.init_node() before this will work
             header.frame_id = "odom"
@@ -283,7 +309,7 @@ class AEKF():
             pose_control = PoseWithCovariance(pose, pose_covariance)
 
             # next, we'll publish the pose message over ROS
-            twist = Twist(Vector3(self.X_control[3], 0, self.X_control[5]),Vector3(0.0, 0.0, self.X_control[4]))
+            twist = Twist(Vector3(self.X_control[3], 0, 0),Vector3(0.0, 0.0, self.X_control[4]))
 
             twist_covariance     = [0] * 36
 
@@ -325,10 +351,10 @@ class AEKF():
                     self.Z = np.append(self.Z, np.array([self.wheel_odometer_state[0], self.wheel_odometer_state[1]]))
                     self.R = np.append(self.R, np.array([self.wheel_odometer_state[2], self.wheel_odometer_state[3]]))
 
-                    self.H = np.column_stack([self.H, np.array([0,0,0,1,0,0]), np.array([0,0,0,0,1,0])])
-                    self.J_H = np.column_stack([self.J_H, np.array([0,0,0,1,0,0]), np.array([0,0,0,0,1,0])])
+                    self.H = np.column_stack([self.H, np.array([0,0,0,1,0]), np.array([0,0,0,0,1])])
+                    self.J_H = np.column_stack([self.J_H, np.array([0,0,0,1,0]), np.array([0,0,0,0,1])])
 
-                    text += " Odom "
+                    text += " WOdom "
                 else:
                     text += " \t "
 
@@ -338,48 +364,42 @@ class AEKF():
                     self.Z = np.append(self.Z, np.array([self.visual_odometer_state[0], self.visual_odometer_state[1]]))
                     self.R = np.append(self.R, np.array([self.visual_odometer_state[2], self.visual_odometer_state[3]]))
 
-                    self.H = np.column_stack([self.H, np.array([0,0,0,1,0,0]), np.array([0,0,0,0,1,0])])
-                    self.J_H = np.column_stack([self.J_H, np.array([0,0,0,1,0,0]), np.array([0,0,0,0,1,0])])
+                    self.H = np.column_stack([self.H, np.array([0,0,0,1,0]), np.array([0,0,0,0,1])])
+                    self.J_H = np.column_stack([self.J_H, np.array([0,0,0,1,0]), np.array([0,0,0,0,1])])
 
-                    text += " Odom "
+                    text += " VOdom "
                 else:
                     text += " \t "
 
 
                 if(self.gps_measure):
+                    # Update with the GPS yaw only when not in manual mode or when moving, or when the control is not fused then assume that the yaw need to be filtered
+                    if( ( ( self.current_status != 1 ) or ( self.control_state[0] > 0 and self.control_state[1] == 0 ) ) or (not self.control_fusion) ):
+                        self.Z = np.append(self.Z, np.array([self.gps_state[0], self.gps_state[1], self.gps_state[2]]))
+                        self.R = np.append(self.R, np.array([self.gps_state[3], self.gps_state[4], self.gps_state[5]]))
 
-                    self.Z = np.append(self.Z, np.array([self.gps_state[0], self.gps_state[1], self.gps_state[2]]))
-                    self.R = np.append(self.R, np.array([self.gps_state[3], self.gps_state[4], self.gps_state[5]]))
+                        self.H = np.column_stack([self.H, np.array([1,0,0,0,0]), np.array([0,1,0,0,0]), np.array([0,0,1,0,0])])
+                        self.J_H = np.column_stack([self.J_H, np.array([1,0,0,0,0]), np.array([0,1,0,0,0]), np.array([0,0,1,0,0])])
 
-                    self.H = np.column_stack([self.H, np.array([1,0,0,0,0,0]), np.array([0,1,0,0,0,0]), np.array([0,0,1,0,0,0])])
-                    self.J_H = np.column_stack([self.J_H, np.array([1,0,0,0,0,0]), np.array([0,1,0,0,0,0]), np.array([0,0,1,0,0,0])])
+                    else:
+                        self.Z = np.append(self.Z, np.array([self.gps_state[0], self.gps_state[1]]))
+                        self.R = np.append(self.R, np.array([self.gps_state[3], self.gps_state[4]]))
 
-                    """
-                    self.Z = np.append(self.Z,  np.array([self.gps_state[2]]))
-                    self.R = np.append(self.R,  np.array([self.gps_state[5]]))
+                        self.H = np.column_stack([self.H, np.array([1,0,0,0,0]), np.array([0,1,0,0,0])])
+                        self.J_H = np.column_stack([self.J_H, np.array([1,0,0,0,0]), np.array([0,1,0,0,0])])
 
-                    self.H = np.column_stack([self.H,  np.array([0,0,1,0,0,0])])
-                    self.J_H = np.column_stack([self.J_H,  np.array([0,0,1,0,0,0])])
-                    """
                     text += " GPS "
                 else:
                     text += " \t "
 
 
                 if(self.gps_left_measure >= self.gps_left_hz):
-                    """
-                    self.Z = np.append(self.Z, np.array([self.gps_left_state[0], self.gps_left_state[1], self.gps_left_state[2]]))
-                    self.R = np.append(self.R, np.array([self.gps_left_state[3], self.gps_left_state[4], self.gps_left_state[5]]))
-
-                    self.H = np.column_stack([self.H, np.array([1,0,0,0,0,0]), np.array([0,1,0,0,0,0]), np.array([0,0,1,0,0,0])])
-                    self.J_H = np.column_stack([self.J_H, np.array([1,0,0,0,0,0]), np.array([0,1,0,0,0,0]), np.array([0,0,1,0,0,0])])
-                    """
 
                     self.Z = np.append(self.Z, np.array([self.gps_left_state[0], self.gps_left_state[1]]))
                     self.R = np.append(self.R, np.array([self.gps_left_state[3], self.gps_left_state[4]]))
 
-                    self.H = np.column_stack([self.H, np.array([1,0,0,0,0,0]), np.array([0,1,0,0,0,0])])
-                    self.J_H = np.column_stack([self.J_H, np.array([1,0,0,0,0,0]), np.array([0,1,0,0,0,0])])
+                    self.H = np.column_stack([self.H, np.array([1,0,0,0,0]), np.array([0,1,0,0,0])])
+                    self.J_H = np.column_stack([self.J_H, np.array([1,0,0,0,0]), np.array([0,1,0,0,0])])
 
                     self.gps_left_measure = 0
 
@@ -389,18 +409,12 @@ class AEKF():
 
 
                 if(self.gps_right_measure >= self.gps_right_hz):
-                    """
-                    self.Z = np.append(self.Z, np.array([self.gps_right_state[0], self.gps_right_state[1], self.gps_right_state[2]]))
-                    self.R = np.append(self.R, np.array([self.gps_right_state[3], self.gps_right_state[4], self.gps_right_state[5]]))
 
-                    self.H = np.column_stack([self.H, np.array([1,0,0,0,0,0]), np.array([0,1,0,0,0,0]), np.array([0,0,1,0,0,0])])
-                    self.J_H = np.column_stack([self.J_H, np.array([1,0,0,0,0,0]), np.array([0,1,0,0,0,0]), np.array([0,0,1,0,0,0])])
-                    """
                     self.Z = np.append(self.Z, np.array([self.gps_right_state[0], self.gps_right_state[1]]))
                     self.R = np.append(self.R, np.array([self.gps_right_state[3], self.gps_right_state[4]]))
 
-                    self.H = np.column_stack([self.H, np.array([1,0,0,0,0,0]), np.array([0,1,0,0,0,0])])
-                    self.J_H = np.column_stack([self.J_H, np.array([1,0,0,0,0,0]), np.array([0,1,0,0,0,0])])
+                    self.H = np.column_stack([self.H, np.array([1,0,0,0,0]), np.array([0,1,0,0,0])])
+                    self.J_H = np.column_stack([self.J_H, np.array([1,0,0,0,0]), np.array([0,1,0,0,0])])
 
                     self.gps_right_measure = 0
 
@@ -411,11 +425,11 @@ class AEKF():
 
                 if(self.imu_left_measure):
 
-                    self.Z = np.append(self.Z, np.array([self.imu_left_state[1], self.imu_left_state[2]]))
-                    self.R = np.append(self.R, np.array([self.imu_left_state[4], self.imu_left_state[5]]))
+                    self.Z = np.append(self.Z, np.array([self.imu_left_state[1]]))
+                    self.R = np.append(self.R, np.array([self.imu_left_state[4]]))
 
-                    self.H = np.column_stack([self.H, np.array([0,0,0,0,1,0]), np.array([0,0,0,0,0,1])])
-                    self.J_H = np.column_stack([self.J_H, np.array([0,0,0,0,1,0]), np.array([0,0,0,0,0,1])])
+                    self.H = np.column_stack([self.H, np.array([0,0,0,0,1])])
+                    self.J_H = np.column_stack([self.J_H, np.array([0,0,0,0,1])])
 
                     text += " imu_l "
                 else:
@@ -424,11 +438,11 @@ class AEKF():
 
                 if(self.imu_right_measure):
 
-                    self.Z = np.append(self.Z, np.array([self.imu_right_state[1], self.imu_right_state[2]]))
-                    self.R = np.append(self.R, np.array([self.imu_right_state[4], self.imu_right_state[5]]))
+                    self.Z = np.append(self.Z, np.array([self.imu_right_state[1]]))
+                    self.R = np.append(self.R, np.array([self.imu_right_state[4]]))
 
-                    self.H = np.column_stack([self.H, np.array([0,0,0,0,1,0]), np.array([0,0,0,0,0,1])])
-                    self.J_H = np.column_stack([self.J_H, np.array([0,0,0,0,1,0]), np.array([0,0,0,0,0,1])])
+                    self.H = np.column_stack([self.H, np.array([0,0,0,0,1])])
+                    self.J_H = np.column_stack([self.J_H, np.array([0,0,0,0,1])])
 
                     text += " imu_r "
                 else:
@@ -450,9 +464,9 @@ class AEKF():
                 # Initialise Measurements Covariance Matrix
                 self.R = np.array([])
                 # Initialise Measurements Matrix
-                self.H = np.zeros((6,0))
+                self.H = np.zeros((5,0))
                 # Initialise Measurements Jacobian Matrix
-                self.J_H = np.zeros((6,0))
+                self.J_H = np.zeros((5,0))
 
             finally:
                 self.lock.release() # release self.lock, no matter what
@@ -469,11 +483,11 @@ class AEKF():
             # State Update
             self.X_t = self.X_Pred + self.K @ Y
             # Conventional Covariance Update
-            #self.P_t = (np.eye(6) - self.K @ Update_J_H) @ self.P_Pred
+            #self.P_t = (np.eye(5) - self.K @ Update_J_H) @ self.P_Pred
             # Joseph form Covariance Update equation -> Ensure Positive Semi-Definite (More time consuming) - Low improvements
-            self.P_t = (np.eye(6) - self.K @ Update_J_H) @ self.P_Pred @ (np.eye(6) - self.K @ Update_J_H).T + self.K @ Update_R @ self.K.T
+            self.P_t = (np.eye(5) - self.K @ Update_J_H) @ self.P_Pred @ (np.eye(5) - self.K @ Update_J_H).T + self.K @ Update_R @ self.K.T
             # Ensure P is symmetric
-            self.P_t = (self.P_t + self.P_t.T) / 2
+            #self.P_t = (self.P_t + self.P_t.T) / 2
 
             if(self.test and self.print):
                 print(text + "\t" + str(self.X_t[0:3]))
@@ -507,7 +521,7 @@ class AEKF():
             pose_ekf = PoseWithCovariance(pose, pose_covariance)
 
             # next, we'll publish the pose message over ROS
-            twist = Twist(Vector3(self.X_t[3], 0, self.X_t[5]),Vector3(0.0, 0.0, self.X_t[4]))
+            twist = Twist(Vector3(self.X_t[3], 0, 0),Vector3(0.0, 0.0, self.X_t[4]))
 
             twist_covariance     = [0] * 36
             twist_covariance[0]  = self.P_t[3][3]
@@ -530,14 +544,12 @@ class AEKF():
         z_x_dot = cmd_vel.linear.x
         z_yaw_dot = cmd_vel.angular.z
 
-        z_delta_x_dot = z_x_dot - self.control_state[0] * self.rate / self.steps
-
         z_x_dot_cov = 0.001
         z_yaw_dot_cov = 0.01
         z_delta_x_dot_cov = 0.01
 
         if(self.current_status == 1):
-            self.control_state = np.array([z_x_dot, z_yaw_dot, z_delta_x_dot])
+            self.control_state = np.array([z_x_dot, z_yaw_dot])
 
         if(self.test and self.print):
             print("         Control \t\t" + str(self.control_state))
@@ -663,23 +675,23 @@ class AEKF():
         self.lock.acquire()
         try:
             # State-Vector
-            self.X_Pred = np.array([0, 0, 0, 0, 0, 0])
+            self.X_Pred = np.array([0, 0, 0, 0, 0])
             # Filter Covariance Matrix
-            #self.P_Pred = np.eye(6)
+            #self.P_Pred = np.eye(5)
 
             # State-Vector
-            self.X_t = np.array([0, 0, 0, 0, 0, 0])
+            self.X_t = np.array([0, 0, 0, 0, 0])
             # Filter Covariance Matrix
-            #self.P_t = np.eye(6)
+            #self.P_t = np.eye(5)
 
             # Initialise Measurements Vector
             self.Z = np.array([])
             # Initialise Measurements Covariance Matrix
             self.R = np.array([])
             # Initialise Measurements Matrix
-            self.H = np.zeros((6,0))
+            self.H = np.zeros((5,0))
             # Initialise Measurements Jacobian Matrix
-            self.J_H = np.zeros((6,0))
+            self.J_H = np.zeros((5,0))
 
             self.wheel_odometer_measure = False
             self.visual_odometer_measure = False
@@ -716,7 +728,7 @@ class AEKF():
         z_x_dot = Ground.twist.twist.linear.x
         z_yaw_dot = Ground.twist.twist.angular.z
 
-        self.ground_state = np.array([z_x, z_y, z_yaw, z_x_dot, z_yaw_dot, 0])
+        self.ground_state = np.array([z_x, z_y, z_yaw, z_x_dot, z_yaw_dot])
 
         if(self.test and self.print):
             print("     Ground \t\t\t" + str(self.ground_state))
@@ -738,8 +750,8 @@ class AEKF():
         z_x_dot = Odometry.twist.twist.linear.x
         z_yaw_dot = Odometry.twist.twist.angular.z
 
-        z_x_dot_cov = 0.005
-        z_yaw_dot_cov = 0.025
+        z_x_dot_cov = self.wheel_odometer_var[0]**2
+        z_yaw_dot_cov = self.wheel_odometer_var[1]**2
 
         # Make sure the execution is safe
         self.lock.acquire()
@@ -830,9 +842,12 @@ class AEKF():
             z_y = gps_n
 
             z_cov = GPSfix.position_covariance[0] # Original value of covariance from Automower
-            z_cov = z_cov / 2.25 # Scale value of HDOP (Averaging among n&e covariances and removing 1.5*1.5 scale)
+            #z_cov = z_cov / 2.25 # Scale value of HDOP (Averaging among n&e covariances and removing 1.5*1.5 scale)
+            #z_cov = z_cov / 2 # To get just the variance
             #z_cov = math.sqrt(z_cov) # Trying to lower the cov to obtain the original HDOP
-            z_yaw_cov = np.deg2rad(22.5)
+            z_yaw_cov = np.deg2rad(30)**2
+
+            #z_cov = ( self.gps_bias[0] +self.gps_bias[1] ) /2
 
             # Make sure the execution is safe
             self.lock.acquire()
@@ -907,8 +922,8 @@ class AEKF():
 
 
             z_cov = gps_left_fix.position_covariance[1] # HDOP received from the receiver
-            z_cov = ( z_cov * 5 ) * ( z_cov * 5 ) # Multiplied with an estimated accuracy of 5m of CEP
-            z_yaw_cov = np.deg2rad(45)
+            #z_cov = ( z_cov * 5 ) * ( z_cov * 5 ) # Multiplied with an estimated accuracy of 5m of CEP
+            z_yaw_cov = np.deg2rad(60)**2
 
             # Make sure the execution is safe
             self.lock.acquire()
@@ -985,8 +1000,8 @@ class AEKF():
 
 
             z_cov = gps_right_fix.position_covariance[1] # HDOP received from the receiver
-            z_cov = ( z_cov * 5 ) * ( z_cov * 5 ) # Multiplied with an estimated accuracy of 5m of CEP
-            z_yaw_cov = np.deg2rad(45)
+            #z_cov = ( z_cov * 5 ) * ( z_cov * 5 ) # Multiplied with an estimated accuracy of 5m of CEP
+            z_yaw_cov = np.deg2rad(60)**2
 
             # Make sure the execution is safe
             self.lock.acquire()
@@ -1106,11 +1121,17 @@ class AEKF():
 
 
 def groundTruthRMSE(hX, hG):
-    RMSE = np.zeros((6, 1))
-    for i in range(6):
+    RMSE = np.zeros((5, 1))
+    for i in range(5):
         MSE = np.square(np.subtract(hG[i,].flatten(),hX[i,].flatten())).mean()
         RMSE[i] = math.sqrt(MSE)
     return RMSE
+
+def groundTruthAME(hX, hG):
+    AME = np.zeros((5, 1))
+    for i in range(5):
+        AME[i] = np.absolute(np.subtract(hG[i,].flatten(), hX[i,].flatten())).mean()
+    return AME
 
 def plot_covariance_ellipse(xEst, PEst):  # pragma: no cover
     Pxy = PEst[0:2, 0:2]
@@ -1138,7 +1159,7 @@ def plot_covariance_ellipse(xEst, PEst):  # pragma: no cover
 
 def plotFinalCovarianceP(P, m):
 
-    fig = plt.figure(figsize=(6, 6))
+    fig = plt.figure(figsize=(5, 5))
 
     #print(P)
 
@@ -1148,15 +1169,15 @@ def plotFinalCovarianceP(P, m):
 
     ylocs, ylabels = plt.yticks()
     # set the locations of the yticks
-    plt.yticks(np.arange(6))
+    plt.yticks(np.arange(5))
     # set the locations and labels of the yticks
-    plt.yticks(np.arange(6),('$x$', '$y$', '$\\theta$', '$v$', '$\omega$', '$a$'), fontsize=22)
+    plt.yticks(np.arange(5),('$x$', '$y$', '$\\theta$', '$v$', '$\omega$'), fontsize=22)
 
     xlocs, xlabels = plt.xticks()
     # set the locations of the yticks
-    plt.xticks(np.arange(6))
+    plt.xticks(np.arange(5))
     # set the locations and labels of the yticks
-    plt.xticks(np.arange(6),('$x$', '$y$', '$\\theta$', '$v$', '$\omega$', '$a$'), fontsize=22)
+    plt.xticks(np.arange(5),('$x$', '$y$', '$\\theta$', '$v$', '$\omega$'), fontsize=22)
 
     """
     plt.xlim([-0.5,4.5])
@@ -1176,21 +1197,20 @@ def plotFinalCovarianceP(P, m):
 
 def plotHistory(H, m, title):
 
-    fig, (ax0, ax1, ax2, ax3, ax4, ax5) = plt.subplots(6, sharex=True)
+    fig, (ax0, ax1, ax2, ax3, ax4) = plt.subplots(5, sharex=True)
     fig.suptitle(title)# + ' (after %i Filter Steps)' % (m))
     p0 = ax0.plot(range(m), H[0], label='$x$')
     p1 = ax1.plot(range(m), H[1], label='$y$')
     p2 = ax2.plot(range(m), H[2], label='$\\theta$')
     p3 = ax3.plot(range(m), H[3], label='$v$')
     p4 = ax4.plot(range(m), H[4], label='$\\omega$')
-    p5 = ax5.plot(range(m), H[5], label='$a$')
 
     ax0.legend(shadow=True, fancybox=True)
     ax1.legend(shadow=True, fancybox=True)
     ax2.legend(shadow=True, fancybox=True)
     ax3.legend(shadow=True, fancybox=True)
     ax4.legend(shadow=True, fancybox=True)
-    ax5.legend(shadow=True, fancybox=True)
+
 
     plt.xlabel('Filter Steps')
     plt.ylabel('')
@@ -1216,31 +1236,31 @@ if __name__ == '__main__':
     # HISTORY
     # Time steps dt
     hDt = list()
-    # State Vector [x y theta v omega a]'
-    hX = np.zeros((6, 1))
-    hC = hX
+    # State Vector [x y theta v omega]'
+    hX = np.zeros((5, 1))
     hG = hX
-    # Wheel Odometry Measures [x y theta v omega a=0]
-    hW = np.zeros((6, 1))
-    # Visual Odometry Measures [x y theta v omega a=0]
-    hV = np.zeros((6, 1))
+    #hC = hX
+    # Wheel Odometry Measures [x y theta v omega]
+    #hW = np.zeros((5, 1))
+    # Visual Odometry Measures [x y theta v omega]
+    #hV = np.zeros((5, 1))
     # GPS Measures [x y theta]
-    hZ = np.zeros((6, 1))
-    hZ_left = np.zeros((6, 1))
-    hZ_right = np.zeros((6, 1))
+    #hZ = np.zeros((5, 1))
+    #hZ_left = np.zeros((5, 1))
+    #hZ_right = np.zeros((5, 1))
     # Innovation K
-    hK = np.zeros((6, 1))
+    hK = np.zeros((5, 1))
     # Covariance P_t
-    hP = np.zeros((6, 1))
+    hP = np.zeros((5, 1))
     # Root Mean Square Error for each coordinate
-    RMSE = np.zeros((6, 1))
-    hRMSE_G_X = RMSE
-    hRMSE_G_C = RMSE
-    hRMSE_G_W = RMSE
-    hRMSE_G_V = RMSE
-    hRMSE_G_Z = RMSE
-    hRMSE_G_Z_left = RMSE
-    hRMSE_G_Z_right = RMSE
+    #RMSE = np.zeros((5, 1))
+    #hRMSE_G_X = RMSE
+    #hRMSE_G_C = RMSE
+    #hRMSE_G_W = RMSE
+    #hRMSE_G_V = RMSE
+    #hRMSE_G_Z = RMSE
+    #hRMSE_G_Z_left = RMSE
+    #hRMSE_G_Z_right = RMSE
 
     try:
         # Initialise the Kalman Filter
@@ -1281,38 +1301,38 @@ if __name__ == '__main__':
             aekf.Update()
 
             # store data history
-            hX = np.hstack((hX, aekf.X_t.reshape(6,1)))
-            hC = np.hstack((hC, aekf.X_control.reshape(6,1)))
-            hG = np.hstack((hG, aekf.ground_state.reshape(6,1)))
-            hW = np.hstack((hW, np.array([aekf.wheel_odometer_state[4], aekf.wheel_odometer_state[5],aekf.wheel_odometer_state[6], aekf.wheel_odometer_state[0], aekf.wheel_odometer_state[1], 0]).reshape(6,1)))
-            hV = np.hstack((hV, np.array([aekf.visual_odometer_state[4], aekf.visual_odometer_state[5],aekf.visual_odometer_state[6], aekf.visual_odometer_state[0], aekf.visual_odometer_state[1], 0]).reshape(6,1)))
-            hZ = np.hstack((hZ, np.array([aekf.gps_state[0],aekf.gps_state[1],aekf.gps_state[2],0,0,0]).reshape(6,1)))
-            hZ_left = np.hstack((hZ_left, np.array([aekf.gps_left_state[0],aekf.gps_left_state[1],aekf.gps_left_state[2],0,0,0]).reshape(6,1)))
-            hZ_right = np.hstack((hZ_right, np.array([aekf.gps_right_state[0],aekf.gps_right_state[1],aekf.gps_right_state[2],0,0,0]).reshape(6,1)))
-            hK = np.hstack((hK, np.array([aekf.K[0,0], aekf.K[1,0], aekf.K[2,0], aekf.K[3,0], aekf.K[4,0], aekf.K[5,0]]).reshape(6,1)))
-            hP = np.hstack((hP, np.array([aekf.P_t[0,0], aekf.P_t[1,1], aekf.P_t[2,2], aekf.P_t[3,3], aekf.P_t[4,4], aekf.P_t[5,5]]).reshape(6,1)))
+            hX = np.hstack((hX, aekf.X_t.reshape(5,1)))
+            hG = np.hstack((hG, aekf.ground_state.reshape(5,1)))
+            #hC = np.hstack((hC, aekf.X_control.reshape(5,1)))
+            #hW = np.hstack((hW, np.array([aekf.wheel_odometer_state[4], aekf.wheel_odometer_state[5],aekf.wheel_odometer_state[6], aekf.wheel_odometer_state[0], aekf.wheel_odometer_state[1]]).reshape(5,1)))
+            #hV = np.hstack((hV, np.array([aekf.visual_odometer_state[4], aekf.visual_odometer_state[5],aekf.visual_odometer_state[6], aekf.visual_odometer_state[0], aekf.visual_odometer_state[1]]).reshape(5,1)))
+            #hZ = np.hstack((hZ, np.array([aekf.gps_state[0],aekf.gps_state[1],aekf.gps_state[2],0,0]).reshape(5,1)))
+            #hZ_left = np.hstack((hZ_left, np.array([aekf.gps_left_state[0],aekf.gps_left_state[1],aekf.gps_left_state[2],0,0]).reshape(5,1)))
+            #hZ_right = np.hstack((hZ_right, np.array([aekf.gps_right_state[0],aekf.gps_right_state[1],aekf.gps_right_state[2],0,0]).reshape(5,1)))
+            hK = np.hstack((hK, np.array([aekf.K[0,0], aekf.K[1,0], aekf.K[2,0], aekf.K[3,0], aekf.K[4,0]]).reshape(5,1)))
+            hP = np.hstack((hP, np.array([aekf.P_t[0,0], aekf.P_t[1,1], aekf.P_t[2,2], aekf.P_t[3,3], aekf.P_t[4,4]]).reshape(5,1)))
 
             # Compute the ground Truth RMSE between Ground and Kalman
-            RMSE_G_X = groundTruthRMSE(hG, hX)
-            hRMSE_G_X = np.hstack((hRMSE_G_X, RMSE_G_X.reshape(6,1)))
+            #RMSE_G_X = groundTruthRMSE(hG, hX)
+            #hRMSE_G_X = np.hstack((hRMSE_G_X, RMSE_G_X.reshape(5,1)))
             # Compute the ground Truth RMSE between Ground and Control
             #RMSE_G_C = groundTruthRMSE(hG, hC)
-            #hRMSE_G_C = np.hstack((hRMSE_G_C, RMSE_G_C.reshape(6,1)))
+            #hRMSE_G_C = np.hstack((hRMSE_G_C, RMSE_G_C.reshape(5,1)))
             # Compute the ground Truth RMSE between Ground and Wheel Odometry
             #RMSE_G_W = groundTruthRMSE(hG, hW)
-            #hRMSE_G_W = np.hstack((hRMSE_G_W, RMSE_G_W.reshape(6,1)))
+            #hRMSE_G_W = np.hstack((hRMSE_G_W, RMSE_G_W.reshape(5,1)))
             # Compute the ground Truth RMSE between Ground and Visual Odometry
             #RMSE_G_V = groundTruthRMSE(hG, hV)
-            #hRMSE_G_V = np.hstack((hRMSE_G_V, RMSE_G_V.reshape(6,1)))
+            #hRMSE_G_V = np.hstack((hRMSE_G_V, RMSE_G_V.reshape(5,1)))
             # Compute the ground Truth RMSE between Ground and GPS
             #RMSE_G_Z = groundTruthRMSE(hG, hZ)
-            #hRMSE_G_Z = np.hstack((hRMSE_G_Z, RMSE_G_Z.reshape(6,1)))
+            #hRMSE_G_Z = np.hstack((hRMSE_G_Z, RMSE_G_Z.reshape(5,1)))
             # Compute the ground Truth RMSE between Ground and GPS_left
             #RMSE_G_Z_left = groundTruthRMSE(hG, hZ_left)
-            #hRMSE_G_Z_left = np.hstack((hRMSE_G_Z_left, RMSE_G_Z_left.reshape(6,1)))
+            #hRMSE_G_Z_left = np.hstack((hRMSE_G_Z_left, RMSE_G_Z_left.reshape(5,1)))
             # Compute the ground Truth RMSE between Ground and GPS_right
             #RMSE_G_Z_right = groundTruthRMSE(hG, hZ_right)
-            #hRMSE_G_Z_right = np.hstack((hRMSE_G_Z_right, RMSE_G_Z_right.reshape(6,1)))
+            #hRMSE_G_Z_right = np.hstack((hRMSE_G_Z_right, RMSE_G_Z_right.reshape(5,1)))
 
             """ Plot in real time (time consuming)
             plt.cla()
@@ -1346,13 +1366,15 @@ if __name__ == '__main__':
 
     #for i in range(len(hPx)):
     #    plt.plot(hPx[i], hPy[i], "--r")
-
+    print(("Number of steps: " + str(len(hDt))))
     print("X_t")
     print(aekf.X_t)
     print("P_t")
     print(aekf.P_t)
+    print("Final AME: Ground vs Kalman")
+    print(groundTruthAME(hG, hX))
     print("Final RMSE: Ground vs Kalman")
-    print(RMSE_G_X)
+    print(groundTruthRMSE(hG, hX))
     #print("Final RMSE: Ground vs Control")
     #print(RMSE_G_C)
     #print("Final RMSE: Ground vs WheelOdometry")
@@ -1369,7 +1391,7 @@ if __name__ == '__main__':
     plotFinalCovarianceP(aekf.P_t, hP.shape[1])
     plotHistory(hK, hK.shape[1], 'Innovation Gain $K$')
     plotHistory(hP, hP.shape[1], 'Covariance Matrix $P$')
-    plotHistory(hRMSE_G_X, hRMSE_G_X.shape[1], 'RMSE: Ground vs Kalman')
+    #plotHistory(hRMSE_G_X, hRMSE_G_X.shape[1], 'RMSE: Ground vs Kalman')
     #plotHistory(hRMSE_G_C, hRMSE_G_C.shape[1], 'RMSE: Ground vs Control')
     #plotHistory(hRMSE_G_W, hRMSE_G_W.shape[1], 'RMSE: Ground vs WheelOdometry')
     #plotHistory(hRMSE_G_V, hRMSE_G_V.shape[1], 'RMSE: Ground vs VisualOdometry')
@@ -1382,24 +1404,24 @@ if __name__ == '__main__':
     # for stopping simulation with the esc key.
     plt.gcf().canvas.mpl_connect('key_release_event',
             lambda event: [exit(0) if event.key == 'escape' else None])
-    plt.plot(hZ_left[0, :],
-             hZ_left[1, :], color='red', marker='3', linestyle="None",
-             label = "GPS Left")
-    plt.plot(hZ_right[0, :],
-             hZ_right[1, :], color='orange', marker='4', linestyle="None",
-             label = "GPS Right")
-    plt.plot(hZ[0, :],
-             hZ[1, :], color='magenta', marker='1', linestyle="None",
-             label = "GPS")
-    plt.plot(hC[0, :].flatten(),
-             hC[1, :].flatten(), color='deepskyblue', linestyle='dashed', linewidth = 2,
-             label = "Control")
-    plt.plot(hW[0, :].flatten(),
-             hW[1, :].flatten(), color='teal', linestyle='dotted', linewidth = 2,
-             label = "Wheel")
-    plt.plot(hV[0, :].flatten(),
-             hV[1, :].flatten(), color='lawngreen', linestyle='dotted', linewidth = 2,
-             label = "Visual")
+    #plt.plot(hZ_left[0, :],
+    #         hZ_left[1, :], color='red', marker='3', linestyle="None",
+    #         label = "GPS Left")
+    #plt.plot(hZ_right[0, :],
+    #         hZ_right[1, :], color='orange', marker='4', linestyle="None",
+    #         label = "GPS Right")
+    #plt.plot(hZ[0, :],
+    #         hZ[1, :], color='magenta', marker='1', linestyle="None",
+    #         label = "GPS")
+    #plt.plot(hC[0, :].flatten(),
+    #         hC[1, :].flatten(), color='deepskyblue', linestyle='dashed', linewidth = 2,
+    #         label = "Control")
+    #plt.plot(hW[0, :].flatten(),
+    #         hW[1, :].flatten(), color='teal', linestyle='dotted', linewidth = 2,
+    #         label = "Wheel")
+    #plt.plot(hV[0, :].flatten(),
+    #         hV[1, :].flatten(), color='lawngreen', linestyle='dotted', linewidth = 2,
+    #         label = "Visual")
     plt.plot(hG[0, :].flatten(),
              hG[1, :].flatten(), color='black', linestyle='solid', linewidth = 2,
              label = "Ground")
@@ -1440,10 +1462,10 @@ if __name__ == '__main__':
     fig.tight_layout()
     plt.pause(1)
 
-    resultFileName = "/home/marco/Videos/GT/Test.txt"
+    resultFileName = "/home/marco/Videos/Tests/Results.txt"
 
     with open(resultFileName, "w+") as resultFile:
-        resultFile.write("Number of steps: " + str(hRMSE_G_X.shape[1]))
+        resultFile.write("Number of steps: " + str(len(hDt)))
         resultFile.write("\nX_t\n")
         np.savetxt(resultFile, aekf.X_t)
         resultFile.write("\nP_t\n")
@@ -1454,8 +1476,10 @@ if __name__ == '__main__':
         np.savetxt(resultFile, hP)
         resultFile.write("\nHistory of K_t\n")
         np.savetxt(resultFile, hK)
-        resultFile.write("\nHistory of RMSE : Ground vs EKF\n")
-        np.savetxt(resultFile, RMSE_G_X)
+        resultFile.write("\nAME : Ground vs EKF\n")
+        np.savetxt(resultFile, groundTruthAME(hG, hX))
+        resultFile.write("\nRMSE : Ground vs EKF\n")
+        np.savetxt(resultFile, groundTruthRMSE(hG, hX))
         #resultFile.write("\nHistory of Ground\n")
         #np.savetxt(resultFile, hG)
         #resultFile.write("\nHistory of Control\n")

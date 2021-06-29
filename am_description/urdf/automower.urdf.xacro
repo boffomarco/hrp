@@ -234,7 +234,7 @@
       <updateRate>10.0</updateRate>
       <rpyOffsets>0 0 0</rpyOffsets>
 
-      <gaussianNoise>0.0</gaussianNoise>  
+      <gaussianNoise>0.0</gaussianNoise>
       <accelDrift>0.0 0.0 0.0</accelDrift>
       <accelGaussianNoise>0.0 0.0 0.0</accelGaussianNoise>
       <rateDrift>0.0 0.0 0.0</rateDrift>
@@ -252,7 +252,7 @@
       <updateRate>10.0</updateRate>
       <rpyOffsets>0 0 0</rpyOffsets>
 
-      <gaussianNoise>0.0</gaussianNoise>  
+      <gaussianNoise>0.0</gaussianNoise>
       <accelDrift>0.0 0.0 0.0</accelDrift>
       <accelGaussianNoise>0.0 0.0 0.0</accelGaussianNoise>
       <rateDrift>0.0 0.0 0.0</rateDrift>

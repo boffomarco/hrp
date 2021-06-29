@@ -1,22 +1,22 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <root version="2.3.8">
  <tabbed_widget parent="main_window" name="Main Window">
-  <Tab tab_name="tab1" containers="1">
+  <Tab containers="1" tab_name="tab1">
    <Container>
-    <DockSplitter sizes="1" count="1" orientation="-">
-     <DockSplitter sizes="0.5;0.5" count="2" orientation="|">
-      <DockSplitter sizes="0.500564;0.499436" count="2" orientation="-">
+    <DockSplitter orientation="-" sizes="1" count="1">
+     <DockSplitter orientation="|" sizes="0.500653;0.499347" count="2">
+      <DockSplitter orientation="-" sizes="0.500564;0.499436" count="2">
        <DockArea name="...">
-        <plot mode="XYPlot" style="Lines">
-         <range right="8.584564" left="0.191582" top="2.443775" bottom="-2.701745"/>
+        <plot style="Lines" mode="XYPlot">
+         <range right="74.600149" top="31.995408" bottom="-0.780376" left="7.159488"/>
          <limitY/>
-         <curve name="/Odom_Ground/pose/position/[x;y]" curve_x="/Odom_Ground/pose/position/x" curve_y="/Odom_Ground/pose/position/y" color="#1f77b4"/>
-         <curve name="/odom/pose/position/[x;y]" curve_x="/odom/pose/position/x" curve_y="/odom/pose/position/y" color="#d62728"/>
+         <curve curve_x="/Odom_Ground/pose/position/x" curve_y="/Odom_Ground/pose/position/y" name="/Odom_Ground/pose/position/[x;y]" color="#1f77b4"/>
+         <curve curve_x="/odom/pose/position/x" curve_y="/odom/pose/position/y" name="/odom/pose/position/[x;y]" color="#d62728"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot mode="TimeSeries" style="Lines">
-         <range right="52.917233" left="0.000000" top="10.969879" bottom="-4.168962"/>
+        <plot style="Lines" mode="TimeSeries">
+         <range right="187.200709" top="-991.883927" bottom="-1440.799659" left="87.206208"/>
          <limitY/>
          <curve name="/Odom_Ground/pose/orientation/yaw_deg" color="#f14cc1"/>
          <curve name="/odom/pose/orientation/yaw_deg" color="#9467bd"/>
@@ -24,8 +24,8 @@
        </DockArea>
       </DockSplitter>
       <DockArea name="...">
-       <plot mode="XYPlot" style="Lines">
-        <range right="1.000000" left="0.000000" top="1.223309" bottom="-0.226422"/>
+       <plot style="Lines" mode="XYPlot">
+        <range right="1.000000" top="1.061149" bottom="-0.062431" left="0.000000"/>
         <limitY/>
        </plot>
       </DockArea>
@@ -33,68 +33,93 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab tab_name="tab2" containers="1">
+  <Tab containers="1" tab_name="tab2">
    <Container>
-    <DockSplitter sizes="1" count="1" orientation="-">
-     <DockSplitter sizes="0.5;0.5" count="2" orientation="|">
+    <DockSplitter orientation="-" sizes="1" count="1">
+     <DockSplitter orientation="|" sizes="0.500653;0.499347" count="2">
       <DockArea name="...">
-       <plot mode="XYPlot" style="Lines">
-        <range right="10.638938" left="-0.307495" top="8.095830" bottom="-7.202100"/>
+       <plot style="Lines" mode="XYPlot">
+        <range right="68.145151" top="58.014452" bottom="-41.489883" left="-21.169739"/>
         <limitY/>
-        <curve name="/Odom_Ground/pose/position/[x;y]" curve_x="/Odom_Ground/pose/position/x" curve_y="/Odom_Ground/pose/position/y" color="#17becf"/>
-        <curve name="/odom/pose/position/[x;y]" curve_x="/odom/pose/position/x" curve_y="/odom/pose/position/y" color="#bcbd22"/>
-        <curve name="/Odom_GPS/pose/position/[x;y]" curve_x="/Odom_GPS/pose/position/x" curve_y="/Odom_GPS/pose/position/y" color="#1f77b4"/>
-        <curve name="/Odom_Full_EKF/pose/position/[x;y]" curve_x="/Odom_Full_EKF/pose/position/x" curve_y="/Odom_Full_EKF/pose/position/y" color="#1ac938"/>
-        <curve name="/Odom_Control/pose/position/[x;y]" curve_x="/Odom_Control/pose/position/x" curve_y="/Odom_Control/pose/position/y" color="#1f77b4"/>
-        <curve name="/Odom_gps_left/pose/position/[x;y]" curve_x="/Odom_gps_left/pose/position/x" curve_y="/Odom_gps_left/pose/position/y" color="#ff7f0e"/>
+        <curve curve_x="/Odom_Ground/pose/position/x" curve_y="/Odom_Ground/pose/position/y" name="/Odom_Ground/pose/position/[x;y]" color="#17becf"/>
+        <curve curve_x="/odom/pose/position/x" curve_y="/odom/pose/position/y" name="/odom/pose/position/[x;y]" color="#bcbd22"/>
+        <curve curve_x="/Odom_GPS/pose/position/x" curve_y="/Odom_GPS/pose/position/y" name="/Odom_GPS/pose/position/[x;y]" color="#1f77b4"/>
+        <curve curve_x="/Odom_Control/pose/position/x" curve_y="/Odom_Control/pose/position/y" name="/Odom_Control/pose/position/[x;y]" color="#1f77b4"/>
+        <curve curve_x="/rtabmap/odom/pose/position/x" curve_y="/rtabmap/odom/pose/position/y" name="/rtabmap/odom/pose/position/[x;y]" color="#1ac938"/>
+        <curve curve_x="/Odom_AEKF/pose/position/x" curve_y="/Odom_AEKF/pose/position/y" name="/Odom_AEKF/pose/position/[x;y]" color="#d62728"/>
        </plot>
       </DockArea>
-      <DockSplitter sizes="0.249718;0.250847;0.249718;0.249718" count="4" orientation="-">
+      <DockSplitter orientation="-" sizes="0.249718;0.250847;0.316384;0.183051" count="4">
        <DockArea name="...">
-        <plot mode="TimeSeries" style="Lines">
-         <range right="37.663546" left="0.055304" top="186.750000" bottom="-96.750001"/>
+        <plot style="Lines" mode="TimeSeries">
+         <range right="214.800208" top="-2423.614682" bottom="-2634.150988" left="114.801316"/>
          <limitY/>
          <curve name="/Odom_Ground/pose/orientation/yaw_deg" color="#f14cc1"/>
          <curve name="/odom/pose/orientation/yaw_deg" color="#9467bd"/>
          <curve name="/Odom_GPS/pose/orientation/yaw_deg" color="#d62728"/>
-         <curve name="/Odom_Full_EKF/pose/orientation/yaw_deg" color="#ff7f0e"/>
          <curve name="/Odom_Control/pose/orientation/yaw_deg" color="#bcbd22"/>
-         <curve name="/Odom_gps_left/pose/orientation/yaw_deg" color="#f14cc1"/>
+         <curve name="/rtabmap/odom/pose/orientation/yaw_deg" color="#d62728"/>
+         <curve name="/Odom_AEKF/pose/orientation/yaw_deg" color="#1ac938"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot mode="TimeSeries" style="Lines">
-         <range right="37.663546" left="0.055304" top="0.431590" bottom="-0.010527"/>
+        <plot style="Lines" mode="TimeSeries">
+         <range right="214.803615" top="1.021796" bottom="-0.918201" left="114.261966"/>
          <limitY/>
          <curve name="/odom/twist/linear/x" color="#9467bd"/>
          <curve name="/Odom_Ground/twist/linear/x" color="#bcbd22"/>
-         <curve name="/Odom_Full_EKF/twist/linear/x" color="#9467bd"/>
          <curve name="/Odom_Control/twist/linear/x" color="#1ac938"/>
+         <curve name="/rtabmap/odom/twist/linear/x" color="#f14cc1"/>
+         <curve name="/Odom_AEKF/pose/orientation/yaw_deg" color="#1ac938"/>
+         <curve name="/Odom_AEKF/twist/linear/x" color="#17becf"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot mode="TimeSeries" style="Lines">
-         <range right="37.663546" left="0.055304" top="0.417404" bottom="-0.478820"/>
+        <plot style="Lines" mode="TimeSeries">
+         <range right="214.805230" top="1.873104" bottom="-1.582805" left="114.261966"/>
          <limitY/>
          <curve name="/imu_right/imu/data_raw/angular_velocity/z" color="#d62728"/>
          <curve name="/imu_left/imu/data_raw/angular_velocity/z" color="#ff7f0e"/>
          <curve name="/odom/twist/angular/z" color="#f14cc1"/>
          <curve name="/Odom_Ground/twist/angular/z" color="#17becf"/>
-         <curve name="/Odom_Full_EKF/twist/angular/z" color="#f14cc1"/>
          <curve name="/Odom_Control/twist/angular/z" color="#d62728"/>
+         <curve name="/rtabmap/odom/twist/angular/z" color="#ff7f0e"/>
+         <curve name="/Odom_AEKF/twist/angular/z" color="#9467bd"/>
+         <curve name="a" color="#f14cc1"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot mode="TimeSeries" style="Lines">
-         <range right="37.663546" left="0.057107" top="12.424535" bottom="-16.720044"/>
+        <plot style="Lines" mode="TimeSeries">
+         <range right="214.805230" top="20.351579" bottom="-22.118738" left="114.805343"/>
          <limitY/>
          <curve name="/imu_right/imu/data_raw/linear_acceleration/y" color="#1f77b4"/>
          <curve name="/imu_left/imu/data_raw/linear_acceleration/y" color="#1ac938"/>
-         <curve name="/Odom_Full_EKF/twist/linear/z" color="#17becf"/>
         </plot>
        </DockArea>
       </DockSplitter>
      </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab containers="1" tab_name="tab2">
+   <Container>
+    <DockSplitter orientation="-" sizes="1" count="1">
+     <DockArea name="...">
+      <plot style="Lines" mode="TimeSeries">
+       <range right="187.200709" top="0.205461" bottom="-0.004751" left="87.206208"/>
+       <limitY/>
+       <curve name="/Odom_AEKF/pose/covariance[0,0]" color="#1ac938"/>
+       <curve name="/Odom_AEKF/pose/covariance[0,1]" color="#ff7f0e"/>
+       <curve name="/Odom_AEKF/pose/covariance[1,1]" color="#f14cc1"/>
+       <curve name="/Odom_AEKF/pose/covariance[5,5]" color="#9467bd"/>
+       <curve name="/Odom_AEKF/pose/covariance[3,3]" color="#17becf"/>
+       <curve name="/Odom_AEKF/pose/covariance[4,4]" color="#bcbd22"/>
+       <curve name="/Odom_AEKF/twist/covariance[0,0]" color="#1f77b4"/>
+       <curve name="/Odom_AEKF/twist/covariance[5,5]" color="#d62728"/>
+       <curve name="/imu_right/imu/data_raw/linear_acceleration/y" color="#ff7f0e"/>
+       <curve name="a" color="#f14cc1"/>
+      </plot>
+     </DockArea>
     </DockSplitter>
    </Container>
   </Tab>
@@ -128,10 +153,30 @@
   <plugin ID="ROS Topic Re-Publisher" status="idle"/>
  </Plugins>
  <!-- - - - - - - - - - - - - - - -->
- <previouslyLoaded_Datafiles/>
+ <previouslyLoaded_Datafiles>
+  <fileInfo filename="/home/marco/Pictures/AEKF5-NoNMEA/2021-06-13-13-09-05-AEKF5-NoNMEA.bag" prefix="">
+   <selected_datasources value="/Odom_AEKF;/Odom_Control;/Odom_GPS;/Odom_Ground;/cmd_vel;/imu_left/imu/data_raw;/imu_right/imu/data_raw;/odom;/rtabmap/odom"/>
+   <plugin ID="DataLoad ROS bags">
+    <use_header_stamp value="true"/>
+    <use_renaming_rules value="true"/>
+    <discard_large_arrays value="true"/>
+    <max_array_size value="10"/>
+   </plugin>
+  </fileInfo>
+ </previouslyLoaded_Datafiles>
  <previouslyLoaded_Streamer name="ROS Topic Subscriber"/>
  <!-- - - - - - - - - - - - - - - -->
- <customMathEquations/>
+ <customMathEquations>
+  <snippet name="a">
+   <global></global>
+   <function>return (math.abs(value)+math.abs(v1))^2*0.04
+</function>
+   <linkedSource>/imu_left/imu/data_raw/linear_acceleration/y</linkedSource>
+   <additionalSources>
+    <v1>/imu_right/imu/data_raw/linear_acceleration/y</v1>
+   </additionalSources>
+  </snippet>
+ </customMathEquations>
  <snippets/>
  <!-- - - - - - - - - - - - - - - -->
 </root>
